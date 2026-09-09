@@ -24,8 +24,11 @@
   </div>
 </div>
 
-<!-- APP SHELL -->
+<!-- APP -->
 <div id="app" style="display:none">
+
+  <!-- Hamburger mobile -->
+  <button id="hamburger" aria-label="Menu">☰</button>
 
   <!-- SIDEBAR -->
   <aside id="sidebar">
@@ -34,21 +37,23 @@
       <span class="sidebar-title">Quantum Lab</span>
     </div>
     <nav>
-      <div class="nav-section" data-i="nav_grover">GROVER</div>
-      <a class="nav-item active" onclick="showPage('grover-lab')" data-i="nav_grover_lab">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('grover-explain')" data-i="nav_grover_exp">📖 Explicación</a>
+      <div class="nav-section">⚛ GROVER</div>
+      <a class="nav-item active" onclick="showPage('grover-lab')">🔬 Laboratorio</a>
+      <a class="nav-item" onclick="showPage('grover-explain')">📖 Explicación</a>
 
-      <div class="nav-section" data-i="nav_teleport">TELEPORTACIÓN</div>
-      <a class="nav-item" onclick="showPage('teleport-lab')" data-i="nav_teleport_lab">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('teleport-explain')" data-i="nav_teleport_exp">📖 Explicación</a>
+      <div class="nav-section">🔗 TELEPORTACIÓN</div>
+      <a class="nav-item" onclick="showPage('teleport-lab')">🔬 Laboratorio</a>
+      <a class="nav-item" onclick="showPage('teleport-explain')">📖 Explicación</a>
 
-      <div class="nav-section" data-i="nav_steane">STEANE</div>
-      <a class="nav-item" onclick="showPage('steane-lab')" data-i="nav_steane_lab">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('steane-explain')" data-i="nav_steane_exp">📖 Explicación</a>
+      <div class="nav-section">🛡 STEANE</div>
+      <a class="nav-item" onclick="showPage('steane-lab')">🔬 Laboratorio</a>
+      <a class="nav-item" onclick="showPage('steane-explain')">📖 Explicación</a>
 
-      <div class="nav-section" data-i="nav_extras">EXTRAS</div>
-      <a class="nav-item" onclick="showPage('speedup')" data-i="nav_speedup">📊 Cuántico vs Clásico</a>
-      <a class="nav-item" onclick="showPage('visual3d')" data-i="nav_3d">🌐 Visualización 3D</a>
+      <div class="nav-section">📊 EXTRAS</div>
+      <a class="nav-item" onclick="showPage('speedup')">📊 Cuántico vs Clásico</a>
+      <a class="nav-item" onclick="showPage('quiz')">🧠 Quiz</a>
+      <a class="nav-item" onclick="showPage('history')">🕑 Historial</a>
+      <a class="nav-item" onclick="showPage('visual3d')">🌐 Visualización 3D</a>
     </nav>
     <div class="sidebar-footer">
       <button class="lang-toggle" onclick="toggleLang()" id="lang-toggle-btn">🇺🇸 English</button>
@@ -58,15 +63,19 @@
   <!-- MAIN -->
   <main id="main">
 
-    <!-- ══ GROVER LAB ══ -->
+    <!-- ══════════════════════════════════════
+         GROVER LAB
+    ══════════════════════════════════════ -->
     <div class="page active" id="page-grover-lab">
       <div class="page-header">
-        <h2 data-i="grover_lab_title">⚛ Grover Lab — Búsqueda Cuántica</h2>
-        <p class="page-sub" data-i="grover_lab_sub">Encuentra 1 elemento entre N estados en √N pasos</p>
+        <h2>⚛ Grover Lab — Búsqueda Cuántica</h2>
+        <p class="page-sub">Encuentra 1 elemento entre N estados en √N pasos</p>
       </div>
+
+      <!-- Controls -->
       <div class="card-row">
         <div class="card">
-          <label class="field-label" data-i="lbl_qubits">Número de qubits</label>
+          <label class="field-label">Número de qubits</label>
           <div class="slider-row">
             <input type="range" id="g-qubits" min="2" max="16" value="4" oninput="updateGroverMeta()">
             <span class="slider-val" id="g-qubits-val">4</span>
@@ -74,12 +83,12 @@
           <div class="hint" id="g-space-hint">Espacio: 16 estados</div>
         </div>
         <div class="card">
-          <label class="field-label" data-i="lbl_target">Objetivo (binario)</label>
+          <label class="field-label">Objetivo (binario)</label>
           <input class="mono-input" id="g-target" maxlength="16" value="1111" oninput="validateTarget()">
           <div class="hint" id="g-target-hint" style="color:var(--green)">✓ válido</div>
         </div>
         <div class="card">
-          <label class="field-label" data-i="lbl_shots">Shots</label>
+          <label class="field-label">Shots</label>
           <select id="g-shots" class="select-input">
             <option value="512">512</option>
             <option value="1024" selected>1024</option>
@@ -88,52 +97,88 @@
           </select>
         </div>
       </div>
-      <div class="meta-row" id="g-meta">
-        <div class="meta-kpi"><span class="meta-val" id="g-N">16</span><span class="meta-lbl" data-i="meta_states">estados</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-iters">3</span><span class="meta-lbl" data-i="meta_iters">iteraciones</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-classic">16</span><span class="meta-lbl" data-i="meta_classic">peor caso clásico</span></div>
-        <div class="meta-kpi"><span class="meta-val accent" id="g-speedup">5×</span><span class="meta-lbl" data-i="meta_speedup">aceleración</span></div>
+
+      <!-- Meta KPIs -->
+      <div class="meta-row">
+        <div class="meta-kpi"><span class="meta-val" id="g-N">16</span><span class="meta-lbl">estados</span></div>
+        <div class="meta-kpi"><span class="meta-val" id="g-iters">3</span><span class="meta-lbl">iteraciones</span></div>
+        <div class="meta-kpi"><span class="meta-val" id="g-classic">16</span><span class="meta-lbl">peor caso clásico</span></div>
+        <div class="meta-kpi"><span class="meta-val accent" id="g-speedup">5×</span><span class="meta-lbl">aceleración</span></div>
       </div>
+
+      <!-- Bloch spheres walkthrough -->
+      <div class="walk-panel">
+        <div class="walk-header">
+          <span class="walk-title" id="g-walk-label">Estado inicial</span>
+          <span class="walk-step" id="g-walk-step">1/5</span>
+        </div>
+        <p class="walk-desc" id="g-walk-desc">Todos los qubits comienzan en |0⟩.</p>
+        <div class="bloch-row">
+          <div class="bloch-wrap">
+            <canvas id="g-bloch0" width="140" height="140"></canvas>
+            <div class="bloch-lbl">q₀</div>
+          </div>
+          <div class="bloch-wrap">
+            <canvas id="g-bloch1" width="140" height="140"></canvas>
+            <div class="bloch-lbl">q₁</div>
+          </div>
+          <div class="walk-circuit" id="g-circuit-walk"></div>
+        </div>
+        <div class="walk-controls">
+          <button class="walk-btn" id="g-walk-prev" onclick="groverWalkStep(-1)" disabled>← Anterior</button>
+          <div class="step-dots" id="g-walk-dots"></div>
+          <button class="walk-btn" id="g-walk-next" onclick="groverWalkStep(1)">Siguiente →</button>
+        </div>
+      </div>
+
       <button class="run-btn" id="g-run-btn" onclick="runGrover()">
-        <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+        <span class="run-icon">▶</span> Ejecutar simulación
       </button>
+
+      <!-- Results -->
       <div id="g-results" style="display:none">
         <div class="results-header">
-          <span data-i="results_title">Resultados — 1024 shots</span>
+          <span>Resultados</span>
           <span class="badge-success" id="g-badge"></span>
         </div>
+        <!-- Iter chart -->
+        <div class="iter-chart-wrap">
+          <div class="col-title">P(objetivo) por iteración Grover</div>
+          <div id="g-iter-chart" style="width:100%"></div>
+        </div>
+        <div class="col-title" style="margin-top:16px">Distribución de mediciones</div>
         <div id="g-bars"></div>
         <div class="info-box" id="g-summary"></div>
-        <div class="circuit-title" data-i="circuit_title">Circuito cuántico</div>
-        <div id="g-circuit-svg"></div>
       </div>
     </div>
 
-    <!-- ══ GROVER EXPLAIN ══ -->
+    <!-- ══════════════════════════════════════
+         GROVER EXPLAIN
+    ══════════════════════════════════════ -->
     <div class="page" id="page-grover-explain">
       <div class="page-header">
-        <h2 data-i="grover_exp_title">📖 ¿Qué es el Algoritmo de Grover?</h2>
+        <h2>📖 ¿Qué es el Algoritmo de Grover?</h2>
       </div>
       <div class="explain-body">
         <div class="explain-block">
-          <h3 data-i="exp_what">¿Qué es?</h3>
-          <p data-i="grover_what_p">Un algoritmo cuántico que encuentra un elemento marcado en una lista desordenada de N elementos usando solo √N pasos — contra los N pasos que necesitaría cualquier algoritmo clásico.</p>
+          <h3>¿Qué es?</h3>
+          <p>Un algoritmo cuántico que encuentra un elemento marcado en una lista desordenada de N elementos usando solo √N pasos — contra los N pasos que necesitaría cualquier algoritmo clásico.</p>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_analogy">Analogía</h3>
-          <p data-i="grover_analogy_p">Imagina que escondes una carta en uno de 1,000,000 sobres. Un humano necesitaría abrir sobre por sobre. Grover "ilumina" todos los sobres a la vez y en 1,000 pasos (√1,000,000) sabe cuál contiene la carta.</p>
+          <h3>Analogía</h3>
+          <p>Imagina que escondes una carta en uno de 1,000,000 sobres. Un humano necesitaría abrir sobre por sobre. Grover "ilumina" todos los sobres a la vez y en 1,000 pasos (√1,000,000) sabe cuál contiene la carta.</p>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_how">¿Cómo funciona?</h3>
+          <h3>¿Cómo funciona?</h3>
           <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong data-i="step_h">Superposición</strong> — <span data-i="step_h_desc">puertas H ponen todos los N estados en paralelo simultáneamente.</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">2</div><div><strong data-i="step_oracle">Oráculo</strong> — <span data-i="step_oracle_desc">invierte la fase del estado objetivo (lo "marca" sin revelar cuál es).</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">3</div><div><strong data-i="step_diffuse">Difusión</strong> — <span data-i="step_diffuse_desc">amplifica la amplitud del estado marcado y suprime los demás.</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#7744cc">4</div><div><strong data-i="step_measure">Medición</strong> — <span data-i="step_measure_desc">el estado objetivo aparece con probabilidad cercana al 100%.</span></div></div>
+            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Superposición</strong> — puertas H ponen todos los N estados en paralelo.</div></div>
+            <div class="step-item"><div class="step-num" style="background:#cc8800">2</div><div><strong>Oráculo</strong> — invierte la fase del estado objetivo sin revelar cuál es.</div></div>
+            <div class="step-item"><div class="step-num" style="background:#119955">3</div><div><strong>Difusión</strong> — amplifica la amplitud del estado marcado y suprime los demás.</div></div>
+            <div class="step-item"><div class="step-num" style="background:#7744cc">4</div><div><strong>Medición</strong> — el objetivo aparece con probabilidad cercana al 100%.</div></div>
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_math">Las matemáticas</h3>
+          <h3>Las matemáticas</h3>
           <div class="math-box">
             <div class="math-line">Iteraciones óptimas: <code>k = ⌊ π/4 · √N ⌋</code></div>
             <div class="math-line">Probabilidad de éxito: <code>P ≈ sin²( (2k+1) · arcsin(1/√N) )</code></div>
@@ -141,50 +186,49 @@
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_results">Resultados reales del proyecto</h3>
+          <h3>Resultados reales del proyecto</h3>
           <table class="results-table">
-            <thead><tr><th data-i="th_config">Configuración</th><th data-i="th_target">Objetivo</th><th data-i="th_shots">Shots</th><th data-i="th_found">Encontrado</th></tr></thead>
+            <thead><tr><th>Configuración</th><th>Objetivo</th><th>Shots</th><th>Encontrado</th></tr></thead>
             <tbody>
               <tr><td>2 qubits</td><td><code>|11⟩</code></td><td>1024</td><td class="green-text">1024/1024 (100%)</td></tr>
               <tr><td>4 qubits</td><td><code>|1111⟩</code></td><td>1024</td><td class="green-text">980/1024 (96%)</td></tr>
-              <tr><td>16 qubits</td><td><code>|1111...⟩</code></td><td>1024</td><td class="green-text">~96% (201 iters)</td></tr>
+              <tr><td>16 qubits</td><td><code>|1111…⟩</code></td><td>1024</td><td class="green-text">~96% (201 iters)</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ══ TELEPORT LAB ══ -->
+    <!-- ══════════════════════════════════════
+         TELEPORT LAB
+    ══════════════════════════════════════ -->
     <div class="page" id="page-teleport-lab">
       <div class="page-header">
-        <h2 data-i="teleport_lab_title">🔗 Teleportación Cuántica — Laboratorio</h2>
-        <p class="page-sub" data-i="teleport_lab_sub">3 qubits · canal entrelazado · 2 bits clásicos</p>
+        <h2>🔗 Teleportación Cuántica — Laboratorio</h2>
+        <p class="page-sub">3 qubits · par Bell entrelazado · 2 bits clásicos</p>
       </div>
+
       <div class="card-row">
         <div class="card">
-          <label class="field-label" data-i="lbl_state">Estado inicial del mensaje (q₀)</label>
+          <label class="field-label">Estado inicial del mensaje (q₀)</label>
           <select id="t-state" class="select-input" onchange="onTStateChange()">
             <option value="plus">|+⟩ — superposición 50/50</option>
             <option value="minus">|−⟩ — superposición (fase opuesta)</option>
             <option value="0">|0⟩ — completamente cero</option>
             <option value="1">|1⟩ — completamente uno</option>
-            <option value="custom" data-i="opt_custom">Personalizado (θ, φ)</option>
+            <option value="custom">Personalizado (ángulo θ)</option>
           </select>
         </div>
         <div class="card" id="t-custom-card" style="display:none">
-          <label class="field-label">θ (grados) — 0°=|0⟩ · 90°=ecuador · 180°=|1⟩</label>
+          <label class="field-label">θ — 0°=|0⟩ · 90°=ecuador · 180°=|1⟩</label>
           <div class="slider-row">
-            <input type="range" id="t-theta" min="0" max="180" value="90" oninput="document.getElementById('t-theta-val').textContent=this.value+'°'">
+            <input type="range" id="t-theta" min="0" max="180" value="90"
+              oninput="document.getElementById('t-theta-val').textContent=this.value+'°'">
             <span class="slider-val" id="t-theta-val">90°</span>
-          </div>
-          <label class="field-label" style="margin-top:10px">φ (grados)</label>
-          <div class="slider-row">
-            <input type="range" id="t-phi" min="0" max="360" value="0" oninput="document.getElementById('t-phi-val').textContent=this.value+'°'">
-            <span class="slider-val" id="t-phi-val">0°</span>
           </div>
         </div>
         <div class="card">
-          <label class="field-label" data-i="lbl_shots">Shots</label>
+          <label class="field-label">Shots</label>
           <select id="t-shots" class="select-input">
             <option value="512">512</option>
             <option value="1024" selected>1024</option>
@@ -192,81 +236,117 @@
           </select>
         </div>
       </div>
+
+      <!-- Bloch walkthrough 3 qubits -->
+      <div class="walk-panel">
+        <div class="walk-header">
+          <span class="walk-title" id="t-walk-label">Mensaje preparado</span>
+          <span class="walk-step" id="t-walk-step">1/5</span>
+        </div>
+        <p class="walk-desc" id="t-walk-desc">q₀ en estado |+⟩.</p>
+        <div class="bloch-row">
+          <div class="bloch-wrap">
+            <canvas id="t-bloch0" width="120" height="120"></canvas>
+            <div class="bloch-lbl" style="color:#44cc88">q₀ msg</div>
+          </div>
+          <div class="bloch-wrap">
+            <canvas id="t-bloch1" width="120" height="120"></canvas>
+            <div class="bloch-lbl" style="color:#4488ff">q₁ Alice</div>
+          </div>
+          <div class="bloch-wrap">
+            <canvas id="t-bloch2" width="120" height="120"></canvas>
+            <div class="bloch-lbl" style="color:#ff8844">q₂ Bob</div>
+          </div>
+          <div class="walk-circuit" id="t-circuit-walk" style="flex:1;min-width:200px"></div>
+        </div>
+        <div class="walk-controls">
+          <button class="walk-btn" id="t-walk-prev" onclick="teleWalkStep(-1)" disabled>← Anterior</button>
+          <div class="step-dots" id="t-walk-dots"></div>
+          <button class="walk-btn" id="t-walk-next" onclick="teleWalkStep(1)">Siguiente →</button>
+        </div>
+      </div>
+
       <button class="run-btn" id="t-run-btn" onclick="runTeleport()">
-        <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+        <span class="run-icon">▶</span> Ejecutar simulación
       </button>
+
       <div id="t-results" style="display:none">
-        <div class="results-header"><span data-i="results_title">Resultados</span></div>
+        <div class="results-header"><span>Resultados</span></div>
         <div class="two-col">
           <div>
-            <div class="col-title" data-i="raw_title">Mediciones brutas (q₂ q₁ q₀)</div>
+            <div class="col-title">Mediciones brutas (q₂ q₁ q₀)</div>
             <div id="t-raw-bars"></div>
           </div>
           <div>
-            <div class="col-title" data-i="bob_title">Bob después de corrección X+Z</div>
+            <div class="col-title">Bob después de corrección X+Z</div>
             <div id="t-bob-bars"></div>
           </div>
         </div>
         <div class="info-box" id="t-summary"></div>
-        <div class="circuit-title" data-i="circuit_title">Circuito cuántico</div>
-        <div id="t-circuit-svg"></div>
+        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
+        <div id="t-circuit-result"></div>
       </div>
     </div>
 
-    <!-- ══ TELEPORT EXPLAIN ══ -->
+    <!-- ══════════════════════════════════════
+         TELEPORT EXPLAIN
+    ══════════════════════════════════════ -->
     <div class="page" id="page-teleport-explain">
       <div class="page-header">
-        <h2 data-i="teleport_exp_title">📖 ¿Qué es la Teleportación Cuántica?</h2>
+        <h2>📖 ¿Qué es la Teleportación Cuántica?</h2>
       </div>
       <div class="explain-body">
         <div class="explain-block">
-          <h3 data-i="exp_what">¿Qué es?</h3>
-          <p data-i="teleport_what_p">Transferir el estado exacto de un qubit de un lugar a otro sin moverlo físicamente. El qubit original es DESTRUIDO en el proceso. Solo la información viaja.</p>
+          <h3>¿Qué es?</h3>
+          <p>Transferir el estado exacto de un qubit de un lugar a otro sin moverlo físicamente. El qubit original es <strong>DESTRUIDO</strong> en el proceso. Solo la información viaja.</p>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_analogy">Analogía</h3>
-          <p data-i="teleport_analogy_p">Imagina que quieres enviar una escultura LEGO a un amigo. En vez de enviarla: (1) la desarmas, (2) anotas cómo era cada pieza, (3) envías esas instrucciones (2 bits clásicos), (4) tu amigo la reconstruye perfectamente. El original desaparece — pero el resultado es idéntico.</p>
+          <h3>Analogía</h3>
+          <p>Imagina enviar una escultura LEGO a un amigo: (1) la desarmas, (2) anotas cómo era cada pieza, (3) envías esas instrucciones (2 bits clásicos), (4) tu amigo la reconstruye perfectamente. El original desaparece — pero el resultado es idéntico.</p>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_how">Los 3 qubits</h3>
+          <h3>Los 3 qubits</h3>
           <div class="qubit-table">
-            <div class="qubit-row"><div class="qubit-badge" style="background:#44cc88">q₀</div><div><strong data-i="q0_lbl">Mensaje</strong> — <span data-i="q0_desc">el estado a teleportar. Después de la medición es destruido.</span></div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#4488ff">q₁</div><div><strong data-i="q1_lbl">Alice</strong> — <span data-i="q1_desc">su mitad del par entrelazado. Mide y envía 2 bits clásicos a Bob.</span></div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#ff8844">q₂</div><div><strong data-i="q2_lbl">Bob</strong> — <span data-i="q2_desc">recibe los 2 bits, aplica correcciones y obtiene el estado original.</span></div></div>
+            <div class="qubit-row"><div class="qubit-badge" style="background:#44cc88">q₀</div><div><strong>Mensaje</strong> — el estado a teleportar. Destruido al medirlo.</div></div>
+            <div class="qubit-row"><div class="qubit-badge" style="background:#4488ff">q₁</div><div><strong>Alice</strong> — su mitad del par entrelazado. Mide y envía 2 bits a Bob.</div></div>
+            <div class="qubit-row"><div class="qubit-badge" style="background:#ff8844">q₂</div><div><strong>Bob</strong> — recibe los 2 bits, aplica correcciones y obtiene el estado original.</div></div>
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_results">Resultado real del proyecto</h3>
+          <h3>Resultado real del proyecto</h3>
           <div class="result-callout">
-            <div data-i="tele_result_1">Mensaje preparado en |+⟩ → α = β = 1/√2 → 50% cada uno</div>
-            <div data-i="tele_result_2">Bob obtuvo: <strong>52% |0⟩ y 48% |1⟩</strong></div>
-            <div class="green-text" data-i="tele_result_3">✓ Diferencia del 2% = ruido estadístico normal (1024 shots)</div>
+            <div>Mensaje preparado en |+⟩ → α = β = 1/√2 → 50% cada uno</div>
+            <div>Bob obtuvo: <strong>52% |0⟩ y 48% |1⟩</strong></div>
+            <div class="green-text">✓ Diferencia del 2% = ruido estadístico normal (1024 shots)</div>
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_key">Concepto clave</h3>
-          <p data-i="teleport_key_p">Ningún qubit viajó físicamente. El protocolo NO viola el límite de la velocidad de la luz porque los 2 bits clásicos deben transmitirse por medios convencionales. No se puede usar para comunicación superlumínica.</p>
+          <h3>Concepto clave</h3>
+          <p>Ningún qubit viajó físicamente. El protocolo NO viola el límite de la velocidad de la luz porque los 2 bits clásicos se transmiten por medios convencionales.</p>
         </div>
       </div>
     </div>
 
-    <!-- ══ STEANE LAB ══ -->
+    <!-- ══════════════════════════════════════
+         STEANE LAB
+    ══════════════════════════════════════ -->
     <div class="page" id="page-steane-lab">
       <div class="page-header">
-        <h2 data-i="steane_lab_title">🛡 Código Steane [7,1,3] — Laboratorio</h2>
-        <p class="page-sub" data-i="steane_lab_sub">1 qubit lógico codificado en 7 físicos · 6 ancillas de síndrome</p>
+        <h2>🛡 Código Steane [7,1,3] — Laboratorio</h2>
+        <p class="page-sub">1 qubit lógico en 7 físicos · 6 ancillas de síndrome</p>
       </div>
+
       <div class="card-row">
         <div class="card">
-          <label class="field-label" data-i="lbl_errq">Qubit con error (−1 = sin error)</label>
+          <label class="field-label">Qubit con error (−1 = sin error)</label>
           <div class="slider-row">
             <input type="range" id="s-errq" min="-1" max="6" value="3" oninput="updateSteaneLabel()">
             <span class="slider-val" id="s-errq-val">d[3]</span>
           </div>
-          <div class="hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X inyectado en d[3]</div>
+          <div class="hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X en d[3]</div>
         </div>
         <div class="card">
-          <label class="field-label" data-i="lbl_shots">Shots</label>
+          <label class="field-label">Shots</label>
           <select id="s-shots" class="select-input">
             <option value="512">512</option>
             <option value="1024" selected>1024</option>
@@ -274,108 +354,157 @@
           </select>
         </div>
       </div>
+
+      <!-- Visual qubit grid -->
+      <div class="card" style="margin-bottom:16px">
+        <label class="field-label">Estado de los 7 qubits físicos</label>
+        <div id="s-qubit-grid" class="qgrid"></div>
+      </div>
+
       <button class="run-btn" id="s-run-btn" onclick="runSteane()">
-        <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+        <span class="run-icon">▶</span> Ejecutar simulación
       </button>
+
       <div id="s-results" style="display:none">
-        <div class="results-header"><span data-i="results_title">Resultados</span></div>
+        <div class="results-header"><span>Resultados</span></div>
         <div class="two-col">
           <div>
-            <div class="col-title" data-i="syndrome_title">Síndrome medido (6 ancillas)</div>
+            <div class="col-title">Síndrome medido (6 ancillas)</div>
             <div id="s-syndrome-display"></div>
           </div>
           <div>
-            <div class="col-title" data-i="logical_title">Qubit lógico tras corrección</div>
+            <div class="col-title">Qubit lógico tras corrección</div>
             <div id="s-logical-bars"></div>
           </div>
         </div>
         <div class="info-box" id="s-summary"></div>
-        <div class="syndrome-map-title" data-i="syndrome_map">Mapa de síndromes [7,1,3]</div>
+        <div class="col-title" style="margin-top:16px">Mapa de síndromes [7,1,3]</div>
         <div id="s-syndrome-map"></div>
+        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
+        <div id="s-circuit-display"></div>
       </div>
     </div>
 
-    <!-- ══ STEANE EXPLAIN ══ -->
+    <!-- ══════════════════════════════════════
+         STEANE EXPLAIN
+    ══════════════════════════════════════ -->
     <div class="page" id="page-steane-explain">
       <div class="page-header">
-        <h2 data-i="steane_exp_title">📖 Corrección de Error Steane [7,1,3]</h2>
+        <h2>📖 Corrección de Error Steane [7,1,3]</h2>
       </div>
       <div class="explain-body">
         <div class="explain-block">
-          <h3 data-i="exp_what">¿Qué es?</h3>
-          <p data-i="steane_what_p">Una forma de proteger 1 qubit lógico usando 7 qubits físicos. Si CUALQUIER qubit se corrompe por ruido de hardware, el código detecta exactamente cuál es y lo corrige — sin mirar directamente el valor del qubit.</p>
+          <h3>¿Qué es?</h3>
+          <p>Una forma de proteger 1 qubit lógico usando 7 qubits físicos. Si CUALQUIER qubit se corrompe por ruido de hardware, el código detecta exactamente cuál es y lo corrige — sin mirar directamente el valor del qubit.</p>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_analogy">¿Por qué es necesario?</h3>
-          <p data-i="steane_why_p">Los qubits reales son frágiles: la radiación de fondo, las vibraciones térmicas y la decoherencia los corrompen constantemente. No puedes simplemente copiar un qubit (teorema de no-clonación), así que hay que protegerlo distribuyendo su información.</p>
+          <h3>¿Por qué es necesario?</h3>
+          <p>Los qubits reales son frágiles: la radiación de fondo, las vibraciones térmicas y la decoherencia los corrompen constantemente. No puedes copiar un qubit (teorema de no-clonación), así que hay que protegerlo distribuyendo su información.</p>
         </div>
         <div class="explain-block">
-          <h3>[7, 1, 3] — ¿qué significan los parámetros?</h3>
+          <h3>[7, 1, 3] — ¿qué significan?</h3>
           <div class="param-table">
-            <div class="param-row"><code class="param-num">7</code><span data-i="param_7">qubits físicos usados</span></div>
-            <div class="param-row"><code class="param-num">1</code><span data-i="param_1">qubit lógico codificado</span></div>
-            <div class="param-row"><code class="param-num">3</code><span data-i="param_3">distancia mínima → corrige ⌊(3−1)/2⌋ = 1 error</span></div>
+            <div class="param-row"><code class="param-num">7</code><span>qubits físicos usados</span></div>
+            <div class="param-row"><code class="param-num">1</code><span>qubit lógico codificado</span></div>
+            <div class="param-row"><code class="param-num">3</code><span>distancia mínima → corrige ⌊(3−1)/2⌋ = 1 error</span></div>
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_how">Pasos del algoritmo</h3>
+          <h3>Pasos del algoritmo</h3>
           <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong data-i="step_encode">Codificación</strong> — <span data-i="step_encode_desc">H en d[0..2] + cadena CNOT distribuye |0_L⟩ en 7 qubits.</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc2222">2</div><div><strong data-i="step_error">Error</strong> — <span data-i="step_error_desc">puerta X en d[i] simula ruido de hardware (bit-flip).</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">3</div><div><strong data-i="step_syndrome">Síndrome</strong> — <span data-i="step_syndrome_desc">6 ancillas miden paridad de grupos sin leer los datos.</span></div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">4</div><div><strong data-i="step_correct">Corrección</strong> — <span data-i="step_correct_desc">el patrón de síndrome señala el qubit culpable → X lo restaura.</span></div></div>
+            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Codificación</strong> — H en d[0..2] + cadena CNOT distribuye |0_L⟩ en 7 qubits.</div></div>
+            <div class="step-item"><div class="step-num" style="background:#cc2222">2</div><div><strong>Error</strong> — puerta X en d[i] simula ruido de hardware (bit-flip).</div></div>
+            <div class="step-item"><div class="step-num" style="background:#cc8800">3</div><div><strong>Síndrome</strong> — 6 ancillas miden paridad de grupos sin leer los datos.</div></div>
+            <div class="step-item"><div class="step-num" style="background:#119955">4</div><div><strong>Corrección</strong> — el patrón señala el qubit culpable → X lo restaura.</div></div>
           </div>
         </div>
         <div class="explain-block">
-          <h3 data-i="exp_results">Resultado real del proyecto</h3>
+          <h3>Resultado real del proyecto</h3>
           <div class="result-callout">
-            <div data-i="steane_result_1">13 qubits en total (7 datos + 6 ancillas) · 1024 shots</div>
-            <div data-i="steane_result_2">Síndrome <code>001110</code> → identifica exactamente d[3]</div>
-            <div class="green-text" data-i="steane_result_3">✓ Mismo principio en hardware cuántico real de IBM</div>
+            <div>13 qubits en total (7 datos + 6 ancillas) · 1024 shots</div>
+            <div>Síndrome <code>001110</code> → identifica exactamente d[3]</div>
+            <div class="green-text">✓ Mismo principio en hardware cuántico real de IBM</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ══ SPEEDUP ══ -->
+    <!-- ══════════════════════════════════════
+         SPEEDUP
+    ══════════════════════════════════════ -->
     <div class="page" id="page-speedup">
       <div class="page-header">
-        <h2 data-i="speedup_title">📊 Cuántico vs Clásico</h2>
-        <p class="page-sub" data-i="speedup_sub">Tabla de aceleración del Algoritmo de Grover</p>
+        <h2>📊 Cuántico vs Clásico</h2>
+        <p class="page-sub">Tabla de aceleración del Algoritmo de Grover</p>
       </div>
       <div class="speedup-formula">
-        <strong data-i="formula_lbl">Fórmula:</strong>
+        <strong>Fórmula:</strong>
         <code>iteraciones = ⌊ π/4 · √N ⌋</code> &nbsp;·&nbsp;
         <code>aceleración = N ÷ iteraciones</code>
       </div>
       <div class="table-wrap">
         <table class="speedup-table">
           <thead>
-            <tr>
-              <th data-i="th_algo">Algoritmo</th>
-              <th data-i="th_states2">Estados N</th>
-              <th data-i="th_classic2">Clásico</th>
-              <th data-i="th_quantum">Cuántico</th>
-              <th data-i="th_speedup2">Aceleración</th>
-            </tr>
+            <tr><th>Algoritmo</th><th>Estados N</th><th>Clásico</th><th>Cuántico</th><th>Aceleración</th></tr>
           </thead>
           <tbody id="speedup-tbody"></tbody>
         </table>
       </div>
-      <div class="speedup-note" data-i="speedup_note">Cada qubit añadido duplica el espacio de búsqueda, pero el algoritmo cuántico solo crece √2 en iteraciones.</div>
-      <div id="speedup-chart-wrap">
-        <canvas id="speedup-canvas" width="700" height="320"></canvas>
+      <p class="speedup-note">Cada qubit añadido duplica el espacio de búsqueda, pero el algoritmo cuántico solo crece √2 en iteraciones.</p>
+      <div id="speedup-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
+        <canvas id="speedup-canvas"></canvas>
       </div>
     </div>
 
-    <!-- ══ 3D VIZ ══ -->
+    <!-- ══════════════════════════════════════
+         QUIZ
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-quiz">
+      <div class="page-header">
+        <h2>🧠 Quiz Cuántico</h2>
+        <p class="page-sub">Pon a prueba tus conocimientos sobre los tres experimentos</p>
+      </div>
+      <div class="quiz-wrap">
+        <div class="quiz-top">
+          <div class="quiz-progress-row">
+            <div class="step-dots" id="quiz-progress"></div>
+            <span class="walk-step" id="quiz-q-num">1/7</span>
+          </div>
+        </div>
+        <div class="quiz-q" id="quiz-q-text"></div>
+        <div class="quiz-opts" id="quiz-opts"></div>
+        <div class="quiz-explanation" id="quiz-explanation" style="display:none"></div>
+        <button class="run-btn" id="quiz-next-btn" onclick="quizNext()" style="display:none;margin-top:12px">
+          <span class="run-icon">→</span> Siguiente pregunta
+        </button>
+        <div id="quiz-score-wrap"></div>
+        <button class="run-btn" onclick="startQuiz()" style="margin-top:8px">
+          <span class="run-icon">↺</span> Iniciar quiz
+        </button>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         HISTORIAL
+    ══════════════════════════════════════ -->
+    <div class="page" id="page-history">
+      <div class="page-header">
+        <h2>🕑 Historial de Experimentos</h2>
+        <p class="page-sub">Tus últimas simulaciones (se guarda en el navegador)</p>
+      </div>
+      <div id="history-list"></div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         3D
+    ══════════════════════════════════════ -->
     <div class="page" id="page-visual3d">
       <div class="page-header">
-        <h2 data-i="viz3d_title">🌐 Visualización 3D Interactiva</h2>
-        <p class="page-sub" data-i="viz3d_sub">Esferas de Bloch, entrelazamiento y amplitudes animadas en Three.js</p>
+        <h2>🌐 Visualización 3D Interactiva</h2>
+        <p class="page-sub">Esferas de Bloch, entrelazamiento y amplitudes animadas</p>
       </div>
       <div class="viz3d-frame-wrap">
-        <iframe src="visual3d.html" id="viz-iframe" title="Quantum 3D Visualizer"></iframe>
+        <iframe src="visual3d.html" title="Quantum 3D Visualizer"></iframe>
       </div>
     </div>
 
@@ -385,5 +514,16 @@
 <script src="i18n.js"></script>
 <script src="sim.js"></script>
 <script src="ui.js"></script>
+<script>
+  // Boot walkthroughs after DOM ready
+  window.addEventListener('load', () => {
+    // Defer until app is shown
+    const orig = startApp;
+    window.startApp = function(){
+      orig();
+      setTimeout(()=>{ initGroverWalk(); initTeleWalk(); renderSteaneGrid(3); startQuiz(); }, 100);
+    };
+  });
+</script>
 </body>
 </html>
