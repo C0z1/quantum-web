@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Visual Lab</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#05070f; color:#e8eaf6; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; }
+
+  #canvas { position:fixed; inset:0; }
+
+  #ui {
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    pointer-events:none;
+    display:flex; flex-direction:column;
+  }
+
+  /* NAV */
+  #nav {
+    display:flex; gap:6px; padding:16px 20px;
+    pointer-events:all;
+    background:linear-gradient(to bottom,rgba(5,7,15,.95),transparent);
+  }
+  .nav-btn {
+    padding:8px 18px; border-radius:20px;
+    border:1px solid rgba(120,140,255,.25);
+    background:rgba(20,25,60,.6); color:#a8b4ff;
+    font-size:13px; cursor:pointer; transition:.2s;
+    backdrop-filter:blur(8px);
+  }
+  .nav-btn:hover { background:rgba(60,80,200,.4); color:#c8d4ff; }
+  .nav-btn.active { background:rgba(80,110,255,.35); color:#fff; border-color:rgba(120,160,255,.6); }
+
+  /* PANEL */
+  #panel {
+    position:fixed; bottom:0; left:0; right:0;
+    padding:20px 24px 24px;
+    background:linear-gradient(to top,rgba(5,7,15,.98) 70%,transparent);
+    pointer-events:all;
+  }
+  #step-title { font-size:18px; font-weight:600; color:#c8d4ff; margin-bottom:4px; }
+  #step-desc  { font-size:13px; color:#7888cc; line-height:1.6; max-width:680px; margin-bottom:14px; }
+
+  #controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+  .btn-play {
+    padding:10px 24px; border-radius:10px;
+    background:rgba(80,110,255,.3); border:1px solid rgba(120,160,255,.5);
+    color:#c8d4ff; font-size:14px; cursor:pointer; transition:.2s;
+  }
+  .btn-play:hover { background:rgba(100,140,255,.5); }
+  .btn-play:disabled { opacity:.4; cursor:not-allowed; }
+
+  .step-dots { display:flex; gap:6px; align-items:center; }
+  .dot { width:8px; height:8px; border-radius:50%; background:rgba(120,140,255,.25); transition:.3s; }
+  .dot.active { background:#7090ff; transform:scale(1.3); }
+  .dot.done   { background:rgba(100,160,100,.6); }
+
+  #speed-wrap { display:flex; align-items:center; gap:8px; margin-left:auto; }
+  #speed-wrap label { font-size:12px; color:#556; }
+  #speed { width:80px; accent-color:#7090ff; }
+
+  /* LEGEND */
+  #legend {
+    position:fixed; top:70px; right:20px;
+    background:rgba(10,14,40,.75); border:1px solid rgba(80,100,200,.2);
+    border-radius:12px; padding:12px 16px;
+    font-size:12px; color:#778; line-height:1.9;
+    backdrop-filter:blur(10px);
+    pointer-events:none;
+  }
+  .leg-row { display:flex; align-items:center; gap:7px; }
+  .leg-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+
+  /* OVERLAY */
+  #overlay {
+    position:fixed; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:20px;
+    background:rgba(5,7,15,.88); pointer-events:all; z-index:99;
+    backdrop-filter:blur(4px);
+  }
+  #overlay h1 { font-size:28px; font-weight:300; letter-spacing:.08em; color:#a8b4ff; }
+  #overlay p  { font-size:14px; color:#556; max-width:440px; text-align:center; line-height:1.7; }
+  #overlay .start-btn {
+    padding:12px 36px; border-radius:12px;
+    background:rgba(80,110,255,.3); border:1px solid rgba(120,160,255,.5);
+    color:#c8d4ff; font-size:15px; cursor:pointer; letter-spacing:.05em; transition:.2s;
+  }
+  #overlay .start-btn:hover { background:rgba(100,140,255,.5); }
+
+  #fps { position:fixed; bottom:8px; right:12px; font-size:10px; color:#334; pointer-events:none; }
+</style>
+</head>
+<body>
+<canvas id="canvas"></canvas>
+
+<div id="overlay">
+  <h1>⚛ Quantum Visual Lab</h1>
+  <p>Visualización 3D interactiva de tres experimentos cuánticos reales: Grover, Teleportación y Corrección de Errores Steane.</p>
+  <button class="start-btn" onclick="startApp()">Iniciar simulación</button>
+</div>
+
+<div id="ui">
+  <div id="nav">
+    <button class="nav-btn active" onclick="loadExperiment('grover')">⚛ Grover</button>
+    <button class="nav-btn"       onclick="loadExperiment('teleport')">🔗 Teleportación</button>
+    <button class="nav-btn"       onclick="loadExperiment('steane')">🛡 Steane</button>
+  </div>
+  <div style="flex:1"></div>
+  <div id="panel">
+    <div id="step-title">Listo</div>
+    <div id="step-desc">Selecciona un experimento arriba para comenzar.</div>
+    <div id="controls">
+      <button class="btn-play" id="btn-play" onclick="playStep()">▶ Reproducir</button>
+      <button class="btn-play" id="btn-next" onclick="nextStep()" style="opacity:.5">Siguiente →</button>
+      <div class="step-dots" id="step-dots"></div>
+      <div id="speed-wrap">
+        <label>Velocidad</label>
+        <input type="range" id="speed" min="0.3" max="3" step="0.1" value="1">
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="legend"></div>
+<div id="fps"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ══════════════════════════════════════════════════════════
+//  THREE.JS SETUP
+// ══════════════════════════════════════════════════════════
+const canvas = document.getElementById('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.01, 1000);
+camera.position.set(0, 3, 9);
+camera.lookAt(0,0,0);
+
+window.addEventListener('resize', () => {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// Lights
+scene.add(new THREE.AmbientLight(0x223366, 1.2));
+const pLight = new THREE.PointLight(0x5577ff, 2, 40);
+pLight.position.set(0, 8, 5);
+scene.add(pLight);
+const pLight2 = new THREE.PointLight(0xff6688, 1, 20);
+pLight2.position.set(-5, -3, 3);
+scene.add(pLight2);
+
+// Stars background
+const starGeo = new THREE.BufferGeometry();
+const starPos = [];
+for (let i=0; i<1800; i++) {
+  starPos.push((Math.random()-.5)*200, (Math.random()-.5)*200, (Math.random()-.5)*200);
+}
+starGeo.setAttribute('position', new THREE.Float32BufferAttribute(starPos,3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0xaaaacc,size:.18,transparent:true,opacity:.7})));
+
+// Grid floor
+const gridHelper = new THREE.GridHelper(20, 20, 0x112244, 0x0a1530);
+gridHelper.position.y = -3.2;
+scene.add(gridHelper);
+
+// ══════════════════════════════════════════════════════════
+//  HELPERS
+// ══════════════════════════════════════════════════════════
+function makeSphere(r, col, wireframe=false) {
+  const g = new THREE.SphereGeometry(r, wireframe?12:32, wireframe?12:32);
+  const m = wireframe
+    ? new THREE.MeshBasicMaterial({color:col,wireframe:true,transparent:true,opacity:.18})
+    : new THREE.MeshStandardMaterial({color:col,roughness:.4,metalness:.3,transparent:true,opacity:.92});
+  return new THREE.Mesh(g,m);
+}
+
+function makeGlow(r, col) {
+  const g = new THREE.SphereGeometry(r*1.35, 16, 16);
+  const m = new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.07,side:THREE.BackSide});
+  return new THREE.Mesh(g,m);
+}
+
+function makeLabel(text, color='#a8b4ff') {
+  const c = document.createElement('canvas');
+  c.width=256; c.height=64;
+  const ctx=c.getContext('2d');
+  ctx.font='bold 22px Segoe UI,sans-serif';
+  ctx.fillStyle=color;
+  ctx.textAlign='center';
+  ctx.fillText(text,128,42);
+  const tex=new THREE.CanvasTexture(c);
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  s.scale.set(2.2,.55,1);
+  return s;
+}
+
+function makeTube(p1, p2, col, r=.03) {
+  const path = new THREE.LineCurve3(p1, p2);
+  const g = new THREE.TubeGeometry(path, 4, r, 6, false);
+  return new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.7}));
+}
+
+function makeArrow(col) {
+  const g = new THREE.ConeGeometry(.08,.22,8);
+  return new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col}));
+}
+
+function lerp(a,b,t){ return a+(b-a)*t; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+
+// ══════════════════════════════════════════════════════════
+//  BLOCH SPHERE OBJECT
+// ══════════════════════════════════════════════════════════
+class BlochSphere {
+  constructor(pos, label, color=0x4488ff) {
+    this.group = new THREE.Group();
+    this.group.position.copy(pos);
+
+    // Outer wireframe
+    this.wire = makeSphere(1.05, color, true);
+    this.group.add(this.wire);
+    // Inner solid (translucent)
+    this.solid = makeSphere(1.0, color, false);
+    this.solid.material.opacity = .12;
+    this.group.add(this.solid);
+    // Glow
+    this.glow = makeGlow(1.0, color);
+    this.group.add(this.glow);
+
+    // Equator ring
+    const ringG = new THREE.TorusGeometry(1.0,.012,8,64);
+    this.ring = new THREE.Mesh(ringG, new THREE.MeshBasicMaterial({color:0x335599,transparent:true,opacity:.5}));
+    this.ring.rotation.x = Math.PI/2;
+    this.group.add(this.ring);
+
+    // Poles
+    const poleG = new THREE.SphereGeometry(.055,8,8);
+    const pm = new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.8});
+    [new THREE.Vector3(0,1.05,0), new THREE.Vector3(0,-1.05,0)].forEach(p=>{
+      const s=new THREE.Mesh(poleG,pm); s.position.copy(p); this.group.add(s);
+    });
+
+    // State vector (arrow)
+    this.theta = 0; // polar angle
+    this.phi   = 0; // azimuthal
+    this.arrowLine = makeTube(new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0), color, .025);
+    this.group.add(this.arrowLine);
+    this.arrowHead = makeArrow(color);
+    this.group.add(this.arrowHead);
+
+    // Label
+    const lbl = makeLabel(label, '#a8b8ff');
+    lbl.position.set(0,-1.6,0);
+    this.group.add(lbl);
+
+    // State label on top of arrow
+    this.stateLabel = makeLabel('|0⟩','#88aaff');
+    this.stateLabel.scale.set(1.4,.35,1);
+    this.group.add(this.stateLabel);
+
+    this.color = color;
+    this.updateArrow();
+    scene.add(this.group);
+  }
+
+  setAngles(theta, phi, label='') {
+    this.theta = theta; this.phi = phi;
+    this.updateArrow(label);
+  }
+
+  updateArrow(label='') {
+    const x = Math.sin(this.theta)*Math.cos(this.phi);
+    const y = Math.cos(this.theta);
+    const z = Math.sin(this.theta)*Math.sin(this.phi);
+    const tip = new THREE.Vector3(x,y,z).multiplyScalar(.95);
+    // Rebuild tube
+    this.group.remove(this.arrowLine);
+    this.arrowLine = makeTube(new THREE.Vector3(0,0,0), tip, this.color, .025);
+    this.group.add(this.arrowLine);
+    // Arrow head
+    this.arrowHead.position.copy(tip);
+    this.arrowHead.rotation.z = -this.theta;
+    this.arrowHead.rotation.y = this.phi;
+    // State label
+    this.stateLabel.position.copy(tip.clone().multiplyScalar(1.35));
+    if(label) {
+      const c=document.createElement('canvas'); c.width=256;c.height=64;
+      const ctx=c.getContext('2d');
+      ctx.font='bold 24px Segoe UI,sans-serif';
+      ctx.fillStyle='#c8d8ff'; ctx.textAlign='center';
+      ctx.fillText(label,128,42);
+      this.stateLabel.material.map=new THREE.CanvasTexture(c);
+      this.stateLabel.material.map.needsUpdate=true;
+    }
+  }
+
+  animateTo(theta, phi, dur, label='') {
+    const t0=this.theta, p0=this.phi;
+    const start=performance.now();
+    const tick=()=>{
+      const t=clamp((performance.now()-start)/dur,0,1);
+      const ease=t<.5?2*t*t:1-2*(1-t)*(1-t);
+      this.theta=lerp(t0,theta,ease);
+      this.phi=lerp(p0,phi,ease);
+      this.updateArrow(t===1?label:'');
+      if(t<1) requestAnimationFrame(tick);
+      else this.updateArrow(label);
+    };
+    tick();
+  }
+
+  pulse(col) {
+    const g=makeGlow(1.0,col||this.color);
+    this.group.add(g);
+    const start=performance.now();
+    const tick=()=>{
+      const t=clamp((performance.now()-start)/700,0,1);
+      g.material.opacity=.35*(1-t);
+      g.scale.setScalar(1+t*.6);
+      if(t<1) requestAnimationFrame(tick); else this.group.remove(g);
+    };
+    tick();
+  }
+  remove(){ scene.remove(this.group); }
+}
+
+// ══════════════════════════════════════════════════════════
+//  ENTANGLEMENT BEAM
+// ══════════════════════════════════════════════════════════
+class EntanglementBeam {
+  constructor(p1, p2, col=0x88aaff) {
+    this.group = new THREE.Group();
+    this.particles = [];
+    this.col = col;
+    // Core beam
+    const path = new THREE.LineCurve3(p1, p2);
+    const g = new THREE.TubeGeometry(path, 8, .015, 6, false);
+    this.beam = new THREE.Mesh(g, new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.4}));
+    this.group.add(this.beam);
+    // Flowing particles along beam
+    for(let i=0;i<6;i++){
+      const pg=new THREE.SphereGeometry(.06,6,6);
+      const pm=new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.9});
+      const p=new THREE.Mesh(pg,pm);
+      p._t = i/6;
+      p._p1 = p1.clone(); p._p2 = p2.clone();
+      this.particles.push(p);
+      this.group.add(p);
+    }
+    scene.add(this.group);
+  }
+  update(dt) {
+    this.particles.forEach(p=>{
+      p._t=(p._t+dt*.4)%1;
+      p.position.lerpVectors(p._p1,p._p2,p._t);
+      p.material.opacity=.9*Math.sin(p._t*Math.PI);
+    });
+  }
+  remove(){ scene.remove(this.group); }
+}
+
+// ══════════════════════════════════════════════════════════
+//  AMPLITUDE WAVE (for Grover)
+// ══════════════════════════════════════════════════════════
+class AmplitudeViz {
+  constructor(n) {
+    this.group = new THREE.Group();
+    this.n = n;
+    this.bars = [];
+    this.targetIdx = n-1;
+    const colors = [0x3366ff,0x4488ff,0x66aaff,0x88ccff,0xaaddff,0xcceeff,0x44ffaa,0xff8844];
+    const spacing = Math.min(1.4, 12/(n));
+    const total = (n-1)*spacing;
+    for(let i=0;i<n;i++){
+      const g=new THREE.BoxGeometry(.5*Math.min(1,10/n),.5,.5*Math.min(1,10/n));
+      const isTarget=(i===n-1);
+      const col=isTarget?0xff8844:colors[i%colors.length];
+      const m=new THREE.MeshStandardMaterial({color:col,roughness:.3,metalness:.4,transparent:true,opacity:.88});
+      const bar=new THREE.Mesh(g,m);
+      const x=-total/2+i*spacing;
+      bar.position.set(x,0,0);
+      bar._baseX=x;
+      bar._isTarget=isTarget;
+      bar._col=col;
+      bar._h=.5;
+      this.group.add(bar);
+      // Glow for target
+      if(isTarget){
+        const gl=makeGlow(.4,0xff6622);
+        gl.position.copy(bar.position);
+        this.group.add(gl);
+        bar._glow=gl;
+      }
+      // Label
+      const lbl=makeLabel(i.toString(2).padStart(Math.ceil(Math.log2(n+1)),'0'),isTarget?'#ffaa66':'#5566aa');
+      lbl.scale.set(1.1,.3,1);
+      lbl.position.set(x,-.7,0);
+      this.group.add(lbl);
+      this.bars.push(bar);
+    }
+    this.group.position.y=1;
+    scene.add(this.group);
+  }
+
+  setAmplitudes(amps) {
+    // amps: array of values 0..1, length n
+    this.bars.forEach((bar,i)=>{
+      const h=Math.max(.05,amps[i]*4);
+      bar._h=h;
+      bar.scale.y=h;
+      bar.position.y=h/2;
+      if(bar._glow){ bar._glow.position.y=h/2; bar._glow.scale.setScalar(h); }
+    });
+  }
+
+  uniformAmps()  { return Array(this.n).fill(1/this.n); }
+  groverAmps(iter) {
+    const N=this.n;
+    const theta=Math.asin(1/Math.sqrt(N));
+    const angle=(2*iter+1)*theta;
+    const target=Math.pow(Math.sin(angle),2);
+    const other=(1-target)/(N-1);
+    return this.bars.map((_,i)=>i===N-1?target:other);
+  }
+
+  remove(){ scene.remove(this.group); }
+}
+
+// ══════════════════════════════════════════════════════════
+//  ERROR QUBIT GRID (Steane)
+// ══════════════════════════════════════════════════════════
+class QubitGrid {
+  constructor() {
+    this.group = new THREE.Group();
+    this.qubits=[];
+    const cols=[0x4488ff,0x4488ff,0x4488ff,0x4488ff,0x4488ff,0x4488ff,0x4488ff];
+    const xs=[-3,-2,-1,0,1,2,3];
+    xs.forEach((x,i)=>{
+      const g=new THREE.SphereGeometry(.32,16,16);
+      const m=new THREE.MeshStandardMaterial({color:cols[i],roughness:.3,metalness:.5,transparent:true,opacity:.9});
+      const mesh=new THREE.Mesh(g,m);
+      mesh.position.set(x,0,0);
+      this.group.add(mesh);
+      // Label
+      const lbl=makeLabel(`d[${i}]`,'#6688bb');
+      lbl.scale.set(.9,.25,1);
+      lbl.position.set(x,-.65,0);
+      this.group.add(lbl);
+      this.qubits.push(mesh);
+    });
+    // 6 ancilla qubits below
+    this.ancillas=[];
+    for(let i=0;i<6;i++){
+      const g=new THREE.SphereGeometry(.2,12,12);
+      const m=new THREE.MeshStandardMaterial({color:0x226644,roughness:.4,metalness:.3,transparent:true,opacity:.7});
+      const mesh=new THREE.Mesh(g,m);
+      mesh.position.set(-2.5+i,- 2,0);
+      this.group.add(mesh);
+      this.ancillas.push(mesh);
+    }
+    const lbl2=makeLabel('Ancillas (síndrome)','#336644');
+    lbl2.scale.set(2.6,.4,1); lbl2.position.set(0,-2.7,0);
+    this.group.add(lbl2);
+
+    this.group.position.y=.8;
+    scene.add(this.group);
+  }
+
+  setError(idx) {
+    this.qubits.forEach((q,i)=>{
+      q.material.color.set(i===idx?0xff3322:0x4488ff);
+      q.material.emissive = new THREE.Color(i===idx?0x661100:0x000000);
+    });
+  }
+
+  activateAncilla(idx, syn) {
+    this.ancillas[idx].material.color.set(syn?0xffaa22:0x44aaff);
+    this.ancillas[idx].material.emissive=new THREE.Color(syn?0x664400:0x0022aa);
+  }
+
+  correctQubit(idx) {
+    this.qubits[idx].material.color.set(0x44ff88);
+    this.qubits[idx].material.emissive=new THREE.Color(0x003311);
+  }
+
+  remove(){ scene.remove(this.group); }
+}
+
+// ══════════════════════════════════════════════════════════
+//  EXPERIMENTS
+// ══════════════════════════════════════════════════════════
+let currentObjects=[];
+let currentExp=null;
+let stepIdx=0;
+let steps=[];
+let playing=false;
+let stepTimer=null;
+let beams=[];
+let ampViz=null;
+let lastTime=0;
+
+function clearScene() {
+  currentObjects.forEach(o=>{ if(o.remove) o.remove(); else scene.remove(o); });
+  currentObjects=[];
+  beams=[];
+  ampViz=null;
+  clearTimeout(stepTimer);
+  playing=false;
+  stepIdx=0;
+}
+
+function setStep(i) {
+  stepIdx = clamp(i,0,steps.length-1);
+  const s = steps[stepIdx];
+  document.getElementById('step-title').textContent = s.title;
+  document.getElementById('step-desc').textContent  = s.desc;
+  // dots
+  const dots=document.getElementById('step-dots');
+  dots.innerHTML='';
+  steps.forEach((_,j)=>{
+    const d=document.createElement('div');
+    d.className='dot'+(j<stepIdx?' done':j===stepIdx?' active':'');
+    dots.appendChild(d);
+  });
+  document.getElementById('btn-next').style.opacity = stepIdx>=steps.length-1?.3:1;
+  if(s.action) s.action();
+}
+
+function nextStep() { if(stepIdx<steps.length-1) setStep(stepIdx+1); }
+function playStep() {
+  if(playing){ clearTimeout(stepTimer); playing=false; document.getElementById('btn-play').textContent='▶ Reproducir'; return; }
+  playing=true;
+  document.getElementById('btn-play').textContent='⏸ Pausar';
+  autoPlay();
+}
+function autoPlay(){
+  if(!playing) return;
+  const spd=parseFloat(document.getElementById('speed').value);
+  const delay=2800/spd;
+  if(stepIdx<steps.length-1){
+    stepTimer=setTimeout(()=>{ nextStep(); autoPlay(); },delay);
+  } else {
+    playing=false;
+    document.getElementById('btn-play').textContent='▶ Reproducir';
+  }
+}
+
+// ── GROVER ──────────────────────────────────────────────
+function loadGrover(){
+  clearScene();
+  currentExp='grover';
+  // Show 4 amplitude bars (2 qubit = 4 states)
+  const N=4;
+  const av=new AmplitudeViz(N);
+  currentObjects.push(av);
+  ampViz=av;
+
+  // 2 Bloch spheres
+  const q0=new BlochSphere(new THREE.Vector3(-2,2,0),'q₀  (qubit 0)',0x4488ff);
+  const q1=new BlochSphere(new THREE.Vector3( 2,2,0),'q₁  (qubit 1)',0x8844ff);
+  currentObjects.push(q0,q1);
+  q0.setAngles(0,0,'|0⟩'); q1.setAngles(0,0,'|0⟩');
+
+  steps=[
+    { title:'Estado inicial — |00⟩',
+      desc:'Los dos qubits comienzan en el estado base |0⟩. El vector de estado apunta al polo norte de la esfera de Bloch. Las 4 barras muestran amplitudes: todo en |00⟩.',
+      action:()=>{
+        q0.animateTo(0,0,600,'|0⟩'); q1.animateTo(0,0,600,'|0⟩');
+        av.setAmplitudes([1,0,0,0]);
+      }},
+    { title:'Superposición — Puertas Hadamard',
+      desc:'Las puertas H ponen cada qubit en superposición 50/50. El vector gira al ecuador de la esfera. Ahora los 4 estados existen al mismo tiempo con igual amplitud.',
+      action:()=>{
+        q0.animateTo(Math.PI/2,0,700,'|+⟩'); q1.animateTo(Math.PI/2,Math.PI/4,700,'|+⟩');
+        q0.pulse(0x4488ff); q1.pulse(0x8844ff);
+        setTimeout(()=>av.setAmplitudes([.25,.25,.25,.25]),400);
+      }},
+    { title:'Oráculo — Marca |11⟩ con puerta CZ',
+      desc:'El oráculo invierte la fase del estado objetivo |11⟩ sin destruir la superposición. La barra roja (|11⟩) se marca internamente — no puedes "verlo" directamente aún, eso es la magia cuántica.',
+      action:()=>{
+        q0.animateTo(Math.PI/2,Math.PI,700,'|−⟩'); q1.animateTo(Math.PI/2,Math.PI,700,'|−⟩');
+        q0.pulse(0xff4422); q1.pulse(0xff4422);
+        const amps=[.25,.25,.25,.25]; amps[3]=-.25;
+        av.setAmplitudes([.25,.25,.25,.01]); // visual: target dips
+      }},
+    { title:'Difusión — Amplificación de Grover',
+      desc:'El operador de difusión (H-X-CZ-X-H) amplifica la amplitud del estado marcado |11⟩ y suprime los demás. Después de 1 iteración, la probabilidad de |11⟩ salta a ~100%.',
+      action:()=>{
+        q0.animateTo(Math.PI*.15,0,800,'≈|1⟩'); q1.animateTo(Math.PI*.15,0,800,'≈|1⟩');
+        q0.pulse(0x44ff88); q1.pulse(0x44ff88);
+        setTimeout(()=>av.setAmplitudes([.001,.001,.001,.997]),500);
+      }},
+    { title:'Medición — |11⟩ gana casi siempre',
+      desc:'Al medir, el estado cuántico colapsa. |11⟩ aparece en 1024/1024 shots = 100%. Un ordenador clásico necesitaría hasta 4 intentos; Grover lo hace en 1 sola iteración.',
+      action:()=>{
+        q0.animateTo(Math.PI,0,600,'|1⟩'); q1.animateTo(Math.PI,0,600,'|1⟩');
+        q0.pulse(0xffdd44); q1.pulse(0xffdd44);
+        av.setAmplitudes([0,0,0,1]);
+      }},
+  ];
+  buildDots(); setStep(0);
+}
+
+// ── TELEPORTATION ──────────────────────────────────────
+function loadTeleport(){
+  clearScene();
+  currentExp='teleport';
+
+  // Three Bloch spheres: message, Alice, Bob
+  const qMsg   = new BlochSphere(new THREE.Vector3(-5,1,0),'Mensaje  (q₀)',0x44dd88);
+  const qAlice = new BlochSphere(new THREE.Vector3(-1,1,0),'Alice  (q₁)',0x4488ff);
+  const qBob   = new BlochSphere(new THREE.Vector3( 4,1,0),'Bob  (q₂)',0xff8844);
+  currentObjects.push(qMsg,qAlice,qBob);
+  qMsg.setAngles(Math.PI/2,0,'|+⟩'); qAlice.setAngles(0,0,'|0⟩'); qBob.setAngles(0,0,'|0⟩');
+
+  // Classic channel (dashed look)
+  let classicBeam=null;
+  let entBeam=null;
+
+  steps=[
+    { title:'Mensaje: estado |+⟩ (superposición)',
+      desc:'Alice quiere enviar el estado |+⟩ de q₀ a Bob. El vector verde apunta al ecuador: es una mezcla 50% |0⟩ y 50% |1⟩. Este estado no puede copiarse (teorema de no-clonación).',
+      action:()=>{
+        qMsg.animateTo(Math.PI/2,0,600,'|+⟩');
+        qMsg.pulse(0x44dd88);
+        qAlice.animateTo(0,0,300,'|0⟩'); qBob.animateTo(0,0,300,'|0⟩');
+        if(entBeam){ entBeam.remove(); entBeam=null; }
+        if(classicBeam){ classicBeam.remove(); classicBeam=null; }
+      }},
+    { title:'Par de Bell — Alice y Bob se enlazan',
+      desc:'Se aplica H en q₁ y luego CNOT(q₁→q₂). Alice y Bob ahora comparten un par entrelazado: si uno se mide, el otro queda determinado al instante sin importar la distancia.',
+      action:()=>{
+        qAlice.animateTo(Math.PI/2,Math.PI/3,700,'|Bell⟩');
+        qBob.animateTo(Math.PI/2,Math.PI/3+Math.PI,700,'|Bell⟩');
+        qAlice.pulse(0x4488ff); qBob.pulse(0xff8844);
+        if(entBeam) entBeam.remove();
+        entBeam=new EntanglementBeam(
+          qAlice.group.position.clone().add(new THREE.Vector3(.9,0,0)),
+          qBob.group.position.clone().add(new THREE.Vector3(-.9,0,0)),
+          0x6688ff
+        );
+        currentObjects.push(entBeam);
+        beams.push(entBeam);
+      }},
+    { title:'Alice entrelaza el mensaje con su qubit',
+      desc:'CNOT(q₀→q₁) y H en q₀. El mensaje ahora está "entretejido" con el par entrelazado. Los tres qubits forman un estado de 3 partículas inseparable.',
+      action:()=>{
+        qMsg.animateTo(Math.PI/3,Math.PI/4,700,'entangled');
+        qAlice.animateTo(Math.PI*.6,Math.PI*.5,700,'entangled');
+        qMsg.pulse(0x44dd88); qAlice.pulse(0x4488ff);
+        if(entBeam) entBeam.remove();
+        entBeam=new EntanglementBeam(
+          qMsg.group.position.clone().add(new THREE.Vector3(.9,0,0)),
+          qAlice.group.position.clone().add(new THREE.Vector3(-.9,0,0)),
+          0x44dd88
+        );
+        const entBeam2=new EntanglementBeam(
+          qAlice.group.position.clone().add(new THREE.Vector3(.9,0,0)),
+          qBob.group.position.clone().add(new THREE.Vector3(-.9,0,0)),
+          0x4488ff
+        );
+        currentObjects.push(entBeam,entBeam2);
+        beams=[entBeam,entBeam2];
+      }},
+    { title:'Alice mide — 2 bits clásicos viajan a Bob',
+      desc:'Alice mide q₀ y q₁ obteniendo 2 bits clásicos (00, 01, 10 o 11). El mensaje original (q₀) queda destruido. Los 2 bits viajan por canal clásico hasta Bob.',
+      action:()=>{
+        qMsg.animateTo(Math.PI,0,600,'DESTRUIDO');
+        qMsg.solid.material.opacity=.03;
+        qAlice.animateTo(Math.PI*Math.random(),0,600,'medido');
+        // Classic channel beam
+        beams.forEach(b=>b.remove()); beams=[];
+        if(classicBeam){ classicBeam.remove(); }
+        classicBeam=new EntanglementBeam(
+          qAlice.group.position.clone().add(new THREE.Vector3(.9,0,0)),
+          qBob.group.position.clone().add(new THREE.Vector3(-.9,0,0)),
+          0xffcc44
+        );
+        currentObjects.push(classicBeam);
+        beams=[classicBeam];
+      }},
+    { title:'Bob aplica correcciones — teleportación completa',
+      desc:'Con los 2 bits de Alice, Bob aplica X y/o Z en q₂. Su qubit toma exactamente el estado original |+⟩. ¡Ningún qubit viajó físicamente! Solo 2 bits clásicos fueron enviados.',
+      action:()=>{
+        beams.forEach(b=>b.remove()); beams=[];
+        qBob.animateTo(Math.PI/2,0,800,'|+⟩  ✓');
+        qBob.pulse(0xffdd44);
+        setTimeout(()=>qBob.pulse(0x44ff88),500);
+      }},
+  ];
+  buildDots(); setStep(0);
+}
+
+// ── STEANE ──────────────────────────────────────────────
+function loadSteane(){
+  clearScene();
+  currentExp='steane';
+
+  const grid=new QubitGrid();
+  currentObjects.push(grid);
+
+  let synd=[];
+  const synBits=[0,0,1,1,1,0]; // syndrome for qubit d[3] = 001110
+
+  steps=[
+    { title:'Codificación — 1 qubit lógico en 7 físicos',
+      desc:'Se aplica H en d[0..2] y una cadena de CNOT. Un solo qubit lógico |0⟩ queda distribuido entre los 7 qubits físicos. Ninguno por sí solo contiene la información completa.',
+      action:()=>{
+        grid.qubits.forEach((q,i)=>{
+          q.material.color.set(0x4488ff);
+          q.material.emissive=new THREE.Color(0x001133);
+          setTimeout(()=>{ q.material.emissive=new THREE.Color(0x112255); },i*120);
+        });
+        grid.ancillas.forEach(a=>{ a.material.color.set(0x226644); a.material.emissive=new THREE.Color(0); });
+      }},
+    { title:'Error de hardware — ruido en d[3]',
+      desc:'El qubit d[3] sufre un bit-flip (X gate) por ruido de hardware. En un ordenador cuántico real, esto ocurre constantemente debido a decoherencia y radiación de fondo.',
+      action:()=>{
+        setTimeout(()=>{ grid.setError(3); },400);
+      }},
+    { title:'Medición del síndrome — 6 ancillas detectan el error',
+      desc:'Las 6 ancillas comprueban paridad de grupos distintos de qubits de datos. No miran el dato directamente (eso colapsaría el estado). El patrón de bits del síndrome apunta al qubit corrupto.',
+      action:()=>{
+        synBits.forEach((b,i)=>setTimeout(()=>grid.activateAncilla(i,b),i*200));
+      }},
+    { title:'Diagnóstico — el síndrome señala d[3]',
+      desc:'El síndrome "001110" corresponde únicamente a d[3]. Con el código Steane [7,1,3] se pueden identificar y corregir errores en cualquiera de los 7 qubits de datos.',
+      action:()=>{
+        // Draw lines from ancillas to d[3]
+        const errQ=grid.qubits[3];
+        const worldPos=new THREE.Vector3();
+        errQ.getWorldPosition(worldPos);
+        grid.ancillas.forEach((a,i)=>{
+          if(synBits[i]){
+            const ap=new THREE.Vector3(); a.getWorldPosition(ap);
+            const tube=makeTube(ap,worldPos,0xffaa22,.015);
+            scene.add(tube);
+            currentObjects.push({remove:()=>scene.remove(tube)});
+          }
+        });
+      }},
+    { title:'Corrección — d[3] restaurado',
+      desc:'Se aplica X en d[3] para corregir el flip. El qubit lógico |0⟩ sobrevive intacto. Sin corrección, el error se propagaría. Este es el mismo principio usado en los chips cuánticos de IBM.',
+      action:()=>{
+        setTimeout(()=>{
+          grid.correctQubit(3);
+          grid.qubits[3].material.emissive=new THREE.Color(0x114422);
+        },500);
+      }},
+  ];
+  buildDots(); setStep(0);
+}
+
+function buildDots(){
+  const dots=document.getElementById('step-dots');
+  dots.innerHTML='';
+  steps.forEach((_,j)=>{
+    const d=document.createElement('div'); d.className='dot'; dots.appendChild(d);
+  });
+  document.getElementById('btn-next').style.opacity=1;
+}
+
+// Experiment loader
+function loadExperiment(name){
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  event.target.classList.add('active');
+  if(name==='grover') loadGrover();
+  else if(name==='teleport') loadTeleport();
+  else if(name==='steane') loadSteane();
+  updateLegend(name);
+}
+
+function updateLegend(name){
+  const L={
+    grover:[
+      {c:'#4488ff',t:'Qubit q₀'},
+      {c:'#8844ff',t:'Qubit q₁'},
+      {c:'#ff8844',t:'Estado objetivo |11⟩'},
+      {c:'#44ff88',t:'Amplificado (Grover)'},
+    ],
+    teleport:[
+      {c:'#44dd88',t:'Mensaje (q₀)'},
+      {c:'#4488ff',t:'Alice (q₁)'},
+      {c:'#ff8844',t:'Bob (q₂)'},
+      {c:'#ffcc44',t:'Canal clásico'},
+      {c:'#6688ff',t:'Entrelazamiento'},
+    ],
+    steane:[
+      {c:'#4488ff',t:'Qubit datos sano'},
+      {c:'#ff3322',t:'Error (bit-flip)'},
+      {c:'#ffaa22',t:'Síndrome activo'},
+      {c:'#44ff88',t:'Qubit corregido'},
+      {c:'#226644',t:'Ancillas'},
+    ],
+  }[name]||[];
+  document.getElementById('legend').innerHTML=L.map(l=>`<div class="leg-row"><div class="leg-dot" style="background:${l.c}"></div><span>${l.t}</span></div>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+//  ANIMATE LOOP
+// ══════════════════════════════════════════════════════════
+let frameCount=0; let fpsTime=0;
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt=Math.min((now-lastTime)*.001,.05);
+  lastTime=now;
+
+  // Rotate scene slightly
+  scene.rotation.y += .0006;
+
+  // Update beams
+  beams.forEach(b=>b.update(dt));
+
+  // Pulsing light
+  pLight.intensity=1.8+Math.sin(now*.0012)*.4;
+
+  renderer.render(scene,camera);
+
+  frameCount++;
+  if(now-fpsTime>1000){ document.getElementById('fps').textContent=`${frameCount}fps`; frameCount=0; fpsTime=now; }
+}
+
+function startApp(){
+  document.getElementById('overlay').style.display='none';
+  loadGrover();
+  updateLegend('grover');
+  animate(0);
+}
+</script>
+</body>
+</html>
