@@ -1,4 +1,8 @@
 // ── UI Controller v2 ─────────────────────────────────────────────
+
+// ── Utils (defined first — used by async functions below) ─────────
+function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
 let history = [];   // experiment run history
 
 // ── App boot ─────────────────────────────────────────────────────
@@ -98,9 +102,14 @@ function drawBloch(canvasId, theta, phi, col='#4d80ff', label=''){
 }
 
 // Animate Bloch sphere from angle A to B
+// Fix #9: Per-canvas token prevents stacked rAF loops when user clicks rapidly
+const blochAnimTokens={};
 function animateBloch(canvasId, t0, p0, t1, p1, col, label, dur=600){
+  const myToken={};
+  blochAnimTokens[canvasId]=myToken;
   const start=performance.now();
   const tick=now=>{
+    if(blochAnimTokens[canvasId]!==myToken) return; // cancelled by a newer call
     const progress=clamp((now-start)/dur,0,1);
     const ease=progress<.5?2*progress*progress:1-Math.pow(-2*progress+2,2)/2;
     drawBloch(canvasId, t0+(t1-t0)*ease, p0+(p1-p0)*ease, col, progress>.95?label:'');
@@ -134,6 +143,19 @@ function loadHistory(){
   try{ const h=JSON.parse(localStorage.getItem('qlab_history')||'[]'); history=h; }catch(e){}
   renderHistory();
 }
+// Fix #7: Export run history as a downloadable JSON file
+function exportHistory(){
+  if(!history.length){
+    alert(lang==='es'?'Sin experimentos para exportar.':'No experiments to export.');
+    return;
+  }
+  const blob=new Blob([JSON.stringify(history,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='qlab-results.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+}
 function renderHistory(){
   const el=document.getElementById('history-list'); if(!el) return;
   if(!history.length){ el.innerHTML=`<div class="hist-empty">${lang==='es'?'Sin experimentos aún':'No experiments yet'}</div>`; return; }
@@ -154,6 +176,26 @@ function replayRun(i){
     updateGroverMeta();
     showPage('grover-lab');
     setTimeout(runGrover,100);
+  } else if(r.type==='teleport'){
+    // Fix #8: replay support for teleportation
+    const stateEl=document.getElementById('t-state');
+    if(stateEl) stateEl.value=r.params.state;
+    const thetaEl=document.getElementById('t-theta');
+    if(thetaEl) thetaEl.value=r.params.theta;
+    const shotsEl=document.getElementById('t-shots');
+    if(shotsEl) shotsEl.value=r.params.shots;
+    onTStateChange();
+    showPage('teleport-lab');
+    setTimeout(runTeleport,100);
+  } else if(r.type==='steane'){
+    // Fix #8: replay support for Steane
+    const errqEl=document.getElementById('s-errq');
+    if(errqEl) errqEl.value=r.params.eq;
+    const shotsEl=document.getElementById('s-shots');
+    if(shotsEl) shotsEl.value=r.params.shots;
+    updateSteaneLabel();
+    showPage('steane-lab');
+    setTimeout(runSteane,100);
   }
 }
 
@@ -478,11 +520,10 @@ async function runSteane(){
     :(lang==='es'
       ?`Error en <strong>d[${eq}]</strong> → síndrome <code>${r.syndrome}</code> → corrección X → qubit lógico <strong>sobrevivió</strong>. Mismo principio en IBM Quantum.`
       :`Error on <strong>d[${eq}]</strong> → syndrome <code>${r.syndrome}</code> → X correction → logical qubit <strong>survived</strong>. Same principle on IBM Quantum.`);
-  // Map
+  // Map — Fix #5: use shared SYNDROME_MAP from sim.js instead of a local duplicate
   const mapEl=document.getElementById('s-syndrome-map');
-  const sm={'-1':'000000','0':'001001','1':'010010','2':'011011','3':'001110','4':'010101','5':'011110','6':'001111'};
   mapEl.innerHTML=`<div class="syndrome-map-grid">`+
-    Object.entries(sm).filter(([k])=>k!=='-1').map(([q,syn])=>`
+    Object.entries(SYNDROME_MAP).filter(([k])=>k!=='-1').map(([q,syn])=>`
       <div class="smap-cell ${parseInt(q)===eq?'active':''}">
         <span class="smap-q">d[${q}]</span><code>${syn}</code>
       </div>`).join('')+`</div>`;
@@ -590,8 +631,17 @@ function buildSpeedupTable(){
     <tr><td>Teleportación</td><td>—</td><td style="color:var(--red)">imposible</td><td>3 qubits</td><td class="inf">∞</td></tr>
     <tr><td>Steane [7,1,3]</td><td>—</td><td style="color:var(--text-dim)">sin equiv.</td><td>13 qubits</td><td class="inf">∞</td></tr>`;
 }
+// Fix #10: Set up a ResizeObserver so the chart redraws when the window is resized
+let _speedupRO=null;
+function initSpeedupChartObserver(){
+  const canvas=document.getElementById('speedup-canvas');
+  if(!canvas||_speedupRO) return;
+  _speedupRO=new ResizeObserver(()=>drawSpeedupChart());
+  _speedupRO.observe(canvas.parentElement);
+}
 function drawSpeedupChart(){
   const canvas=document.getElementById('speedup-canvas'); if(!canvas) return;
+  initSpeedupChartObserver();
   const W=canvas.width=canvas.parentElement.offsetWidth-40||660, H=300;
   canvas.height=H;
   const ctx=canvas.getContext('2d');
@@ -642,5 +692,13 @@ function drawSpeedupChart(){
   });
 }
 
+// ── Language change hook (called by i18n.js setLang) ─────────────
+// Fix #11: Re-render the currently visible walkthrough step after a language switch
+// so the active label/description updates immediately without requiring a click.
+function onLangChanged(){
+  if(typeof gWalkStep!=='undefined'&&gWalkStep>=0) groverWalkStep(0);
+  if(typeof tWalkStep!=='undefined'&&tWalkStep>=0) teleWalkStep(0);
+}
+
 // ── Utils ─────────────────────────────────────────────────────────
-function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+// sleep() is defined at the top of this file.

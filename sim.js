@@ -43,7 +43,7 @@ function simGroverFull(n, target, shots){
   let rem = shots;
   states.forEach((s,i) => {
     if(i===states.length-1){ counts[s]=Math.max(0,rem); return; }
-    const c = Math.round(noise(finalProb[s]*shots, shots*.015));
+    const c = Math.max(0, Math.round(noise(finalProb[s]*shots, shots*.015)));
     counts[s]=c; rem-=c;
   });
   if(!counts[target]) counts[target]=0;
@@ -76,7 +76,7 @@ function simTeleport(state, theta_deg, shots){
     const exp=bCorr===0?p0:p1;
     rawCounts[s]=Math.max(0,Math.round(noise(exp*shots*.25,shots*.02)));
   });
-  const tot=Object.values(rawCounts).reduce((a,b)=>a+b,1);
+  const tot=Object.values(rawCounts).reduce((a,b)=>a+b,0)||1;
   const sc=shots/tot;
   Object.keys(rawCounts).forEach(k=>rawCounts[k]=Math.round(rawCounts[k]*sc));
 
@@ -96,7 +96,7 @@ function simSteane(errorQubit,shots){
 // ── CIRCUIT SVG (animated-ready, gate IDs) ───────────────────────
 
 function groverCircuitSVG(n, target, highlightStep=-1){
-  const W=Math.min(n,5);
+  const W=Math.min(n,8); // Fix #3: show up to 8 lanes (slider goes to 16; label below clarifies)
   const H=W*44+70;
   const wy=i=>36+i*44;
   let s=`<svg id="gcircuit" viewBox="0 0 600 ${H}" xmlns="http://www.w3.org/2000/svg"
@@ -142,7 +142,7 @@ function groverCircuitSVG(n, target, highlightStep=-1){
     s+=`<circle cx="180" cy="${wy(W-1)}" r="8" fill="none" stroke="#f5c542" stroke-width="1.2"/>`;
   }
   // Target label
-  s+=`<text x="300" y="${H-6}" text-anchor="middle" font-size="9" fill="#3a4580" font-family="monospace">objetivo |${target}⟩${n>5?' (mostrando 5/'+n+'q)':''}</text>`;
+  s+=`<text x="300" y="${H-6}" text-anchor="middle" font-size="9" fill="#3a4580" font-family="monospace">objetivo |${target}⟩${n>W?' (mostrando '+W+'/'+n+'q — circuito completo en simulación)':''}</text>`;
   s+='</svg>';
   return s;
 }

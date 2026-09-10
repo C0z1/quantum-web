@@ -147,6 +147,8 @@ function setLang(l) {
   document.getElementById('btn-en').classList.toggle('active', l === 'en');
   if (document.getElementById('start-label'))
     document.getElementById('start-label').textContent = T[l]['start_label'];
+  // Fix #11: re-render the active walkthrough step in the new language
+  if (typeof onLangChanged === 'function') onLangChanged();
 }
 
 function toggleLang() { setLang(lang === 'es' ? 'en' : 'es'); }
