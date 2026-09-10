@@ -3,527 +3,916 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚛ Quantum Computing Lab</title>
-<link rel="stylesheet" href="style.css">
+<title>⚛ Quantum Lab</title>
+<style>
+/* ════════════════════════════════════════════════════
+   RESET & TOKENS
+════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#04060f;
+  --s1:#080d1e;
+  --s2:#0d1428;
+  --border:rgba(80,120,255,.14);
+  --border2:rgba(80,120,255,.28);
+  --blue:#4d7fff;
+  --cyan:#38d8f7;
+  --green:#36e8a0;
+  --amber:#f5c542;
+  --red:#f05454;
+  --purple:#a56bff;
+  --text:#d0d8ff;
+  --dim:#4a5480;
+  --r:12px;
+  --font:'Segoe UI',system-ui,sans-serif;
+  --mono:'Fira Code','Consolas',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;overflow-x:hidden;min-height:100vh}
+
+/* ════════════════════════════════════════════════════
+   PARTICLE CANVAS BG
+════════════════════════════════════════════════════ */
+#bgcanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.5}
+
+/* ════════════════════════════════════════════════════
+   SPLASH / HERO
+════════════════════════════════════════════════════ */
+#hero{
+  position:relative;z-index:10;
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;text-align:center;
+  background:radial-gradient(ellipse 80% 60% at 50% 40%,rgba(40,70,200,.12) 0%,transparent 70%);
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 16px;border-radius:99px;
+  border:1px solid rgba(77,127,255,.3);
+  background:rgba(77,127,255,.08);
+  font-size:12px;color:var(--blue);letter-spacing:.08em;
+  margin-bottom:28px;
+}
+.hero-title{
+  font-size:clamp(36px,7vw,80px);font-weight:200;letter-spacing:-.02em;
+  color:#fff;line-height:1.1;margin-bottom:16px;
+}
+.hero-title span{
+  background:linear-gradient(135deg,var(--blue),var(--cyan));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  font-weight:500;
+}
+.hero-sub{font-size:16px;color:var(--dim);max-width:520px;line-height:1.7;margin-bottom:40px}
+
+.hero-lang{display:flex;gap:8px;margin-bottom:32px}
+.lang-pill{
+  padding:7px 20px;border-radius:99px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--dim);font-size:13px;cursor:pointer;transition:.2s;
+}
+.lang-pill.active{background:rgba(77,127,255,.15);color:var(--text);border-color:var(--blue)}
+
+.hero-enter{
+  padding:14px 48px;border-radius:99px;
+  background:linear-gradient(135deg,rgba(77,127,255,.2),rgba(56,216,247,.15));
+  border:1px solid rgba(77,127,255,.5);
+  color:#fff;font-size:16px;cursor:pointer;
+  letter-spacing:.04em;transition:.3s;
+  box-shadow:0 0 40px rgba(77,127,255,.15);
+}
+.hero-enter:hover{
+  background:linear-gradient(135deg,rgba(77,127,255,.35),rgba(56,216,247,.25));
+  box-shadow:0 0 60px rgba(77,127,255,.3);transform:translateY(-2px);
+}
+
+/* scroll indicator */
+.scroll-hint{
+  position:absolute;bottom:30px;left:50%;transform:translateX(-50%);
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  color:var(--dim);font-size:11px;letter-spacing:.1em;
+  animation:bounce 2s ease-in-out infinite;
+}
+.scroll-arrow{width:20px;height:20px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg)}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(8px)}}
+
+/* ════════════════════════════════════════════════════
+   STICKY NAV (appears after scroll)
+════════════════════════════════════════════════════ */
+#topnav{
+  position:fixed;top:0;left:0;right:0;z-index:100;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;height:52px;
+  background:rgba(4,6,15,.85);backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--border);
+  transform:translateY(-100%);transition:transform .3s;
+}
+#topnav.visible{transform:translateY(0)}
+.nav-logo{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:500;color:var(--text)}
+.nav-logo span{font-size:20px}
+.nav-tabs{display:flex;gap:2px}
+.nav-tab{
+  padding:6px 14px;border-radius:8px;border:none;
+  background:transparent;color:var(--dim);
+  font-size:12px;cursor:pointer;transition:.15s;letter-spacing:.02em;
+}
+.nav-tab:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-tab.active{color:var(--blue);background:rgba(77,127,255,.12)}
+#nav-lang{
+  padding:5px 14px;border-radius:99px;
+  border:1px solid var(--border2);background:transparent;
+  color:var(--dim);font-size:12px;cursor:pointer;transition:.15s;
+}
+#nav-lang:hover{border-color:var(--blue);color:var(--text)}
+
+/* ════════════════════════════════════════════════════
+   MAIN SCROLL CONTAINER
+════════════════════════════════════════════════════ */
+#journey{
+  position:relative;z-index:10;
+  display:none; /* shown after Enter */
+}
+
+/* ════════════════════════════════════════════════════
+   EXPERIMENT SECTION
+════════════════════════════════════════════════════ */
+.exp-section{
+  min-height:100vh;padding:80px 0 60px;
+  display:flex;flex-direction:column;align-items:center;
+  position:relative;
+}
+.exp-section::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse 60% 50% at var(--gx,50%) var(--gy,50%),var(--gc,rgba(77,127,255,.06)) 0%,transparent 70%);
+}
+.exp-section[data-exp="grover"]   {--gc:rgba(77,127,255,.07);--gx:30%;--gy:40%}
+.exp-section[data-exp="teleport"] {--gc:rgba(54,232,160,.06);--gx:70%;--gy:40%}
+.exp-section[data-exp="steane"]   {--gc:rgba(165,107,255,.06);--gx:50%;--gy:60%}
+.exp-section[data-exp="speedup"]  {--gc:rgba(245,197,66,.05);--gx:50%;--gy:30%}
+
+.section-inner{width:100%;max-width:960px;padding:0 24px}
+
+/* Section header */
+.section-badge{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:4px 12px;border-radius:99px;
+  border:1px solid var(--sec-color,var(--blue));
+  background:rgba(77,127,255,.07);
+  font-size:11px;color:var(--sec-color,var(--blue));
+  letter-spacing:.08em;margin-bottom:16px;
+}
+.section-title{font-size:clamp(24px,4vw,40px);font-weight:300;color:#fff;margin-bottom:8px;line-height:1.2}
+.section-sub{font-size:14px;color:var(--dim);margin-bottom:36px}
+
+/* ════════════════════════════════════════════════════
+   SPLIT LAYOUT (left controls / right visual)
+════════════════════════════════════════════════════ */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+@media(max-width:680px){.split{grid-template-columns:1fr}}
+
+/* ════════════════════════════════════════════════════
+   GLASS CARD
+════════════════════════════════════════════════════ */
+.glass{
+  background:rgba(8,13,30,.7);
+  border:1px solid var(--border);
+  border-radius:var(--r);
+  padding:20px 22px;
+  backdrop-filter:blur(12px);
+}
+.glass-title{
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--dim);margin-bottom:14px;
+}
+
+/* ════════════════════════════════════════════════════
+   CONTROLS
+════════════════════════════════════════════════════ */
+.ctrl-row{margin-bottom:16px}
+.ctrl-label{font-size:11px;color:var(--dim);margin-bottom:6px;display:block;letter-spacing:.04em}
+.ctrl-slider{display:flex;align-items:center;gap:10px}
+.ctrl-slider input[type=range]{flex:1;accent-color:var(--blue)}
+.ctrl-val{font-family:var(--mono);font-size:14px;color:var(--blue);min-width:36px;text-align:right}
+.ctrl-input{
+  width:100%;background:rgba(4,6,15,.8);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 12px;color:var(--text);
+  font-family:var(--mono);font-size:14px;outline:none;transition:.15s;
+}
+.ctrl-input:focus{border-color:var(--blue)}
+.ctrl-select{
+  width:100%;background:rgba(4,6,15,.8);border:1px solid var(--border2);
+  border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;
+  outline:none;cursor:pointer;
+}
+.ctrl-hint{font-size:11px;color:var(--dim);margin-top:4px}
+
+/* KPI strip */
+.kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+@media(max-width:500px){.kpi-strip{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:10px 14px}
+.kpi-v{font-size:20px;font-weight:500;font-family:var(--mono);line-height:1;color:#fff}
+.kpi-v.hi{color:var(--green)}
+.kpi-l{font-size:10px;color:var(--dim);margin-top:3px}
+
+/* Run button */
+.run-btn{
+  width:100%;padding:12px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(77,127,255,.2),rgba(56,216,247,.1));
+  border:1px solid rgba(77,127,255,.4);
+  color:#fff;font-size:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:.2s;margin-top:4px;
+}
+.run-btn:hover:not(:disabled){
+  background:linear-gradient(135deg,rgba(77,127,255,.35),rgba(56,216,247,.2));
+  border-color:var(--blue);
+}
+.run-btn:disabled{opacity:.4;cursor:not-allowed}
+.run-btn.loading .run-icon{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════
+   VISUAL PANEL (right side)
+════════════════════════════════════════════════════ */
+.viz-panel{display:flex;flex-direction:column;gap:14px}
+
+/* Bloch spheres */
+.bloch-trio{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.bloch-unit{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bloch-unit canvas{border-radius:50%;background:radial-gradient(circle at 35% 35%,rgba(40,60,160,.3),rgba(4,6,15,.8))}
+.bloch-unit-lbl{font-size:10px;font-family:var(--mono);color:var(--dim)}
+
+/* Walk steps */
+.walk-steps{display:flex;gap:0;margin-bottom:16px;overflow:hidden;border-radius:10px;border:1px solid var(--border)}
+.wstep{
+  flex:1;padding:8px 4px;text-align:center;
+  font-size:10px;color:var(--dim);cursor:pointer;
+  border-right:1px solid var(--border);background:transparent;transition:.2s;
+  border:none;
+}
+.wstep:last-child{border-right:none}
+.wstep.active{background:rgba(77,127,255,.15);color:var(--text)}
+.wstep.done{color:var(--green)}
+.walk-info{min-height:52px;margin-bottom:12px}
+.walk-label{font-size:13px;font-weight:500;color:var(--text);margin-bottom:4px}
+.walk-desc{font-size:12px;color:var(--dim);line-height:1.6}
+.walk-nav{display:flex;gap:8px;justify-content:flex-end}
+.walk-nav button{
+  padding:5px 14px;border-radius:7px;font-size:12px;cursor:pointer;
+  border:1px solid var(--border2);background:transparent;color:var(--dim);transition:.15s;
+}
+.walk-nav button:hover:not(:disabled){border-color:var(--blue);color:var(--text)}
+.walk-nav button:disabled{opacity:.25;cursor:not-allowed}
+
+/* Bars */
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.bar-label{font-family:var(--mono);font-size:11px;color:var(--dim);min-width:72px}
+.bar-label.hi{color:var(--amber)}
+.bar-track{flex:1;height:10px;background:rgba(255,255,255,.05);border-radius:99px;overflow:hidden}
+.bar-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1)}
+.bar-pct{font-size:11px;font-family:var(--mono);color:var(--dim);min-width:38px;text-align:right}
+.bar-pct.hi{color:var(--amber)}
+
+/* Info box */
+.info-box{
+  background:var(--s1);border:1px solid var(--border);border-radius:10px;
+  padding:12px 16px;font-size:12px;color:var(--dim);line-height:1.7;
+}
+.info-box strong{color:var(--text)}
+
+/* ════════════════════════════════════════════════════
+   CIRCUIT SVG container
+════════════════════════════════════════════════════ */
+.circuit-wrap{overflow-x:auto;border-radius:10px}
+
+/* ════════════════════════════════════════════════════
+   GROVER ITER CHART
+════════════════════════════════════════════════════ */
+.iter-wrap{border-radius:10px;overflow:hidden}
+
+/* ════════════════════════════════════════════════════
+   TELEPORT QUBIT GRID (visual)
+════════════════════════════════════════════════════ */
+.tele-diagram{
+  display:flex;align-items:center;justify-content:center;
+  gap:8px;padding:16px;
+  background:var(--s1);border-radius:10px;border:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.tele-node{
+  width:60px;height:60px;border-radius:50%;border:2px solid;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:11px;font-family:var(--mono);font-weight:500;
+  transition:.4s;position:relative;
+}
+.tele-connector{
+  width:32px;height:2px;background:var(--dim);position:relative;
+  transition:.4s;flex-shrink:0;
+}
+.tele-connector::after{
+  content:'';position:absolute;right:0;top:-4px;
+  border:4px solid transparent;border-left-color:inherit;
+}
+
+/* ════════════════════════════════════════════════════
+   STEANE QUBIT GRID
+════════════════════════════════════════════════════ */
+.steane-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:6px;
+  padding:14px;background:var(--s1);border:1px solid var(--border);border-radius:10px;
+}
+.sq{
+  aspect-ratio:1;border-radius:50%;border:2px solid rgba(77,127,255,.3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-family:var(--mono);color:var(--dim);
+  background:rgba(77,127,255,.06);transition:.4s;cursor:default;
+}
+.sq.error{
+  border-color:var(--red);background:rgba(240,84,84,.15);color:var(--red);
+  box-shadow:0 0 16px rgba(240,84,84,.4);
+}
+.sq.corrected{
+  border-color:var(--green);background:rgba(54,232,160,.12);color:var(--green);
+  box-shadow:0 0 12px rgba(54,232,160,.3);
+}
+.ancilla-row{
+  display:flex;gap:4px;padding:6px 14px 10px;justify-content:center;
+}
+.anc{
+  width:24px;height:24px;border-radius:6px;border:1px solid rgba(165,107,255,.3);
+  background:rgba(165,107,255,.06);display:flex;align-items:center;justify-content:center;
+  font-size:9px;font-family:var(--mono);color:var(--dim);transition:.4s;
+}
+.anc.active{border-color:var(--amber);background:rgba(245,197,66,.15);color:var(--amber);box-shadow:0 0 10px rgba(245,197,66,.3)}
+
+/* Syndrome bits display */
+.syn-bits{display:flex;gap:6px;margin:12px 0 8px}
+.syn-bit{
+  width:36px;height:36px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-weight:700;font-size:16px;transition:.35s;
+}
+.syn-bit.off{background:var(--s1);color:var(--dim);border:1px solid var(--border)}
+.syn-bit.on{background:rgba(245,197,66,.15);color:var(--amber);border:1px solid var(--amber);box-shadow:0 0 12px rgba(245,197,66,.25)}
+
+/* ════════════════════════════════════════════════════
+   SPEEDUP SECTION
+════════════════════════════════════════════════════ */
+.speedup-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+@media(max-width:600px){.speedup-grid{grid-template-columns:1fr}}
+.sp-table{width:100%;border-collapse:collapse;font-size:12px}
+.sp-table th{background:var(--s2);color:var(--dim);padding:8px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.sp-table td{padding:8px 12px;border-bottom:1px solid var(--border);font-family:var(--mono);color:var(--text)}
+.sp-table .ac{color:var(--green);font-weight:500}
+.sp-table .in{color:var(--purple)}
+
+/* ════════════════════════════════════════════════════
+   SECTION DIVIDER
+════════════════════════════════════════════════════ */
+.divider{
+  height:1px;background:linear-gradient(90deg,transparent,var(--border2),transparent);
+  margin:0 auto;max-width:960px;width:100%;
+}
+
+/* ════════════════════════════════════════════════════
+   QUIZ FLOATING
+════════════════════════════════════════════════════ */
+.quiz-card{max-width:620px;margin:0 auto}
+.quiz-q-text{font-size:16px;color:var(--text);line-height:1.65;margin-bottom:20px;min-height:50px}
+.quiz-options{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.quiz-opt{
+  padding:12px 16px;border-radius:10px;
+  border:1px solid var(--border2);background:var(--s1);
+  color:var(--text);font-size:13px;cursor:pointer;text-align:left;transition:.15s;
+}
+.quiz-opt:hover:not(:disabled){border-color:var(--blue);background:rgba(77,127,255,.1)}
+.quiz-opt.correct{border-color:var(--green);background:rgba(54,232,160,.1);color:var(--green)}
+.quiz-opt.wrong{border-color:var(--red);background:rgba(240,84,84,.08);color:var(--red)}
+.quiz-exp{
+  background:var(--s2);border-left:3px solid var(--blue);border-radius:0 8px 8px 0;
+  padding:12px 16px;font-size:12px;color:var(--dim);line-height:1.7;margin-bottom:12px;
+  display:none;
+}
+.quiz-score-big{font-size:64px;font-weight:200;text-align:center;margin:16px 0 8px;font-family:var(--mono)}
+.quiz-score-msg{text-align:center;color:var(--dim);font-size:14px;margin-bottom:20px}
+
+/* progress pills */
+.quiz-progress{display:flex;gap:5px;margin-bottom:20px}
+.qpill{height:4px;flex:1;border-radius:99px;background:var(--border);transition:.3s}
+.qpill.done{background:var(--green)}
+.qpill.active{background:var(--blue)}
+
+/* ════════════════════════════════════════════════════
+   BOTTOM NAV DOTS (scroll anchors)
+════════════════════════════════════════════════════ */
+#section-dots{
+  position:fixed;right:20px;top:50%;transform:translateY(-50%);
+  display:none;flex-direction:column;gap:10px;z-index:50;
+}
+#section-dots.visible{display:flex}
+.sdot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--border2);border:none;cursor:pointer;transition:.25s;
+  padding:0;
+}
+.sdot.active{background:var(--blue);transform:scale(1.4)}
+.sdot:hover{background:var(--text)}
+
+/* ════════════════════════════════════════════════════
+   SCROLLBAR
+════════════════════════════════════════════════════ */
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px}
+
+/* ════════════════════════════════════════════════════
+   FADE IN ANIMATION
+════════════════════════════════════════════════════ */
+.fade-in{opacity:0;transform:translateY(24px);transition:opacity .6s,transform .6s}
+.fade-in.visible{opacity:1;transform:none}
+</style>
 </head>
 <body>
 
-<!-- SPLASH -->
-<div id="splash">
-  <div class="splash-inner">
-    <div class="splash-icon">⚛</div>
-    <h1>Quantum Computing Lab</h1>
-    <p>Qiskit 2.5.2 · AerSimulator · Visualización interactiva</p>
-    <div class="lang-btns">
-      <button onclick="setLang('es')" class="lang-btn active" id="btn-es">🇲🇽 Español</button>
-      <button onclick="setLang('en')" class="lang-btn" id="btn-en">🇺🇸 English</button>
-    </div>
-    <button class="start-btn" onclick="startApp()">
-      <span id="start-label">Iniciar</span> →
-    </button>
+<canvas id="bgcanvas"></canvas>
+
+<!-- ══ HERO ══ -->
+<section id="hero">
+  <div class="hero-badge">⚛ Qiskit 2.5.2 · AerSimulator · Visualización Interactiva</div>
+  <h1 class="hero-title">Quantum<br><span>Computing Lab</span></h1>
+  <p class="hero-sub">Explora tres experimentos cuánticos reales con simulación en tiempo real, esferas de Bloch animadas y circuitos interactivos.</p>
+  <div class="hero-lang">
+    <button class="lang-pill active" id="btn-es" onclick="setLang('es')">🇲🇽 Español</button>
+    <button class="lang-pill" id="btn-en" onclick="setLang('en')">🇺🇸 English</button>
   </div>
+  <button class="hero-enter" onclick="enterApp()">Comenzar experiencia →</button>
+  <div class="scroll-hint" id="scroll-hint" style="display:none">
+    <span>Scroll</span><div class="scroll-arrow"></div>
+  </div>
+</section>
+
+<!-- ══ TOP NAV ══ -->
+<nav id="topnav">
+  <div class="nav-logo"><span>⚛</span> Quantum Lab</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="scrollTo('grover')">Grover</button>
+    <button class="nav-tab" onclick="scrollTo('teleport')">Teleportación</button>
+    <button class="nav-tab" onclick="scrollTo('steane')">Steane</button>
+    <button class="nav-tab" onclick="scrollTo('speedup')">Comparativa</button>
+    <button class="nav-tab" onclick="scrollTo('quiz')">Quiz</button>
+  </div>
+  <button id="nav-lang" onclick="toggleLang()">🇺🇸 EN</button>
+</nav>
+
+<!-- ══ SIDE DOTS ══ -->
+<div id="section-dots">
+  <button class="sdot active" onclick="scrollTo('grover')" title="Grover"></button>
+  <button class="sdot" onclick="scrollTo('teleport')" title="Teleportación"></button>
+  <button class="sdot" onclick="scrollTo('steane')" title="Steane"></button>
+  <button class="sdot" onclick="scrollTo('speedup')" title="Comparativa"></button>
+  <button class="sdot" onclick="scrollTo('quiz')" title="Quiz"></button>
 </div>
 
-<!-- APP -->
-<div id="app" style="display:none">
+<!-- ══ JOURNEY ══ -->
+<div id="journey">
 
-  <!-- Hamburger mobile -->
-  <button id="hamburger" aria-label="Menu">☰</button>
-
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <span class="sidebar-icon">⚛</span>
-      <span class="sidebar-title">Quantum Lab</span>
-    </div>
-    <nav>
-      <div class="nav-section">⚛ GROVER</div>
-      <a class="nav-item active" onclick="showPage('grover-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('grover-explain')">📖 Explicación</a>
-
-      <div class="nav-section">🔗 TELEPORTACIÓN</div>
-      <a class="nav-item" onclick="showPage('teleport-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('teleport-explain')">📖 Explicación</a>
-
-      <div class="nav-section">🛡 STEANE</div>
-      <a class="nav-item" onclick="showPage('steane-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('steane-explain')">📖 Explicación</a>
-
-      <div class="nav-section">📊 EXTRAS</div>
-      <a class="nav-item" onclick="showPage('speedup')">📊 Cuántico vs Clásico</a>
-      <a class="nav-item" onclick="showPage('quiz')">🧠 Quiz</a>
-      <a class="nav-item" onclick="showPage('history')">🕑 Historial</a>
-      <a class="nav-item" onclick="showPage('visual3d')">🌐 Visualización 3D</a>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="lang-toggle" onclick="toggleLang()" id="lang-toggle-btn">🇺🇸 English</button>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main id="main">
-
-    <!-- ══════════════════════════════════════
-         GROVER LAB
-    ══════════════════════════════════════ -->
-    <div class="page active" id="page-grover-lab">
-      <div class="page-header">
-        <h2>⚛ Grover Lab — Búsqueda Cuántica</h2>
-        <p class="page-sub">Encuentra 1 elemento entre N estados en √N pasos</p>
+  <!-- ████ GROVER ████ -->
+  <section class="exp-section" id="sec-grover" data-exp="grover">
+    <div class="section-inner">
+      <div class="fade-in">
+        <div class="section-badge" style="--sec-color:var(--blue)">⚛ ALGORITMO 01</div>
+        <h2 class="section-title" data-i="grover_title">Grover — Búsqueda Cuántica</h2>
+        <p class="section-sub" data-i="grover_sub">Encuentra 1 elemento entre N en solo √N pasos</p>
       </div>
 
-      <!-- Controls -->
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Número de qubits</label>
-          <div class="slider-row">
-            <input type="range" id="g-qubits" min="2" max="16" value="4" oninput="updateGroverMeta()">
-            <span class="slider-val" id="g-qubits-val">4</span>
+      <div class="kpi-strip fade-in">
+        <div class="kpi"><div class="kpi-v" id="g-N">16</div><div class="kpi-l">Estados N</div></div>
+        <div class="kpi"><div class="kpi-v" id="g-iters">3</div><div class="kpi-l">Iteraciones</div></div>
+        <div class="kpi"><div class="kpi-v" id="g-classic">16</div><div class="kpi-l">Clásico (peor)</div></div>
+        <div class="kpi"><div class="kpi-v hi" id="g-speedup">5×</div><div class="kpi-l">Aceleración</div></div>
+      </div>
+
+      <div class="split fade-in">
+        <!-- Left: controls -->
+        <div>
+          <div class="glass" style="margin-bottom:12px">
+            <div class="glass-title" data-i="g_controls">Configuración</div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_qubits">Número de qubits</span>
+              <div class="ctrl-slider">
+                <input type="range" id="g-qubits" min="2" max="16" value="4" oninput="updateGroverMeta()">
+                <span class="ctrl-val" id="g-qubits-val">4</span>
+              </div>
+              <div class="ctrl-hint" id="g-space-hint">Espacio: 16 estados</div>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_target">Estado objetivo (binario)</span>
+              <input class="ctrl-input" id="g-target" maxlength="16" value="1111" oninput="validateTarget()">
+              <div class="ctrl-hint" id="g-target-hint" style="color:var(--green)">✓ válido</div>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
+              <select class="ctrl-select" id="g-shots">
+                <option value="512">512</option>
+                <option value="1024" selected>1024</option>
+                <option value="2048">2048</option>
+                <option value="4096">4096</option>
+              </select>
+            </div>
+            <button class="run-btn" id="g-run-btn" onclick="runGrover()">
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+            </button>
           </div>
-          <div class="hint" id="g-space-hint">Espacio: 16 estados</div>
-        </div>
-        <div class="card">
-          <label class="field-label">Objetivo (binario)</label>
-          <input class="mono-input" id="g-target" maxlength="16" value="1111" oninput="validateTarget()">
-          <div class="hint" id="g-target-hint" style="color:var(--green)">✓ válido</div>
-        </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="g-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-            <option value="4096">4096</option>
-          </select>
-        </div>
-      </div>
 
-      <!-- Meta KPIs -->
-      <div class="meta-row">
-        <div class="meta-kpi"><span class="meta-val" id="g-N">16</span><span class="meta-lbl">estados</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-iters">3</span><span class="meta-lbl">iteraciones</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-classic">16</span><span class="meta-lbl">peor caso clásico</span></div>
-        <div class="meta-kpi"><span class="meta-val accent" id="g-speedup">5×</span><span class="meta-lbl">aceleración</span></div>
-      </div>
-
-      <!-- Bloch spheres walkthrough -->
-      <div class="walk-panel">
-        <div class="walk-header">
-          <span class="walk-title" id="g-walk-label">Estado inicial</span>
-          <span class="walk-step" id="g-walk-step">1/5</span>
-        </div>
-        <p class="walk-desc" id="g-walk-desc">Todos los qubits comienzan en |0⟩.</p>
-        <div class="bloch-row">
-          <div class="bloch-wrap">
-            <canvas id="g-bloch0" width="140" height="140"></canvas>
-            <div class="bloch-lbl">q₀</div>
+          <!-- Results -->
+          <div id="g-results" style="display:none">
+            <div class="glass">
+              <div class="glass-title">Distribución — <span id="g-badge"></span></div>
+              <div id="g-bars"></div>
+              <div class="info-box" id="g-summary" style="margin-top:12px"></div>
+            </div>
           </div>
-          <div class="bloch-wrap">
-            <canvas id="g-bloch1" width="140" height="140"></canvas>
-            <div class="bloch-lbl">q₁</div>
+        </div>
+
+        <!-- Right: visual -->
+        <div class="viz-panel">
+          <div class="glass">
+            <div class="glass-title" data-i="g_walk_title">Paso a paso</div>
+            <!-- Step pills -->
+            <div class="walk-steps" id="g-steps-pills">
+              <button class="wstep active" onclick="gotoGroverStep(0)">|0⟩</button>
+              <button class="wstep" onclick="gotoGroverStep(1)">H</button>
+              <button class="wstep" onclick="gotoGroverStep(2)">Oráculo</button>
+              <button class="wstep" onclick="gotoGroverStep(3)">Difusión</button>
+              <button class="wstep" onclick="gotoGroverStep(4)">Medir</button>
+            </div>
+            <div class="walk-info">
+              <div class="walk-label" id="g-walk-label">Estado inicial</div>
+              <div class="walk-desc" id="g-walk-desc">Los qubits comienzan en |0⟩. El vector apunta al polo norte de la esfera de Bloch.</div>
+            </div>
+            <!-- Bloch spheres -->
+            <div class="bloch-trio">
+              <div class="bloch-unit">
+                <canvas id="g-bloch0" width="130" height="130"></canvas>
+                <div class="bloch-unit-lbl">q₀</div>
+              </div>
+              <div class="bloch-unit">
+                <canvas id="g-bloch1" width="130" height="130"></canvas>
+                <div class="bloch-unit-lbl">q₁</div>
+              </div>
+            </div>
+            <div class="walk-nav" style="margin-top:12px">
+              <button id="g-walk-prev" onclick="groverWalkStep(-1)" disabled>←</button>
+              <button id="g-walk-next" onclick="groverWalkStep(1)">→</button>
+            </div>
           </div>
-          <div class="walk-circuit" id="g-circuit-walk"></div>
-        </div>
-        <div class="walk-controls">
-          <button class="walk-btn" id="g-walk-prev" onclick="groverWalkStep(-1)" disabled>← Anterior</button>
-          <div class="step-dots" id="g-walk-dots"></div>
-          <button class="walk-btn" id="g-walk-next" onclick="groverWalkStep(1)">Siguiente →</button>
-        </div>
-      </div>
 
-      <button class="run-btn" id="g-run-btn" onclick="runGrover()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
+          <!-- Circuit -->
+          <div class="glass">
+            <div class="glass-title">Circuito cuántico</div>
+            <div class="circuit-wrap" id="g-circuit-walk"></div>
+          </div>
 
-      <!-- Results -->
-      <div id="g-results" style="display:none">
-        <div class="results-header">
-          <span>Resultados</span>
-          <span class="badge-success" id="g-badge"></span>
+          <!-- Iter chart (shown after run) -->
+          <div class="glass" id="g-iter-wrap" style="display:none">
+            <div class="glass-title">P(objetivo) por iteración</div>
+            <div id="g-iter-chart"></div>
+          </div>
         </div>
-        <!-- Iter chart -->
-        <div class="iter-chart-wrap">
-          <div class="col-title">P(objetivo) por iteración Grover</div>
-          <div id="g-iter-chart" style="width:100%"></div>
-        </div>
-        <div class="col-title" style="margin-top:16px">Distribución de mediciones</div>
-        <div id="g-bars"></div>
-        <div class="info-box" id="g-summary"></div>
       </div>
     </div>
+  </section>
 
-    <!-- ══════════════════════════════════════
-         GROVER EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-grover-explain">
-      <div class="page-header">
-        <h2>📖 ¿Qué es el Algoritmo de Grover?</h2>
+  <div class="divider"></div>
+
+  <!-- ████ TELEPORTACIÓN ████ -->
+  <section class="exp-section" id="sec-teleport" data-exp="teleport">
+    <div class="section-inner">
+      <div class="fade-in">
+        <div class="section-badge" style="--sec-color:var(--green)">🔗 ALGORITMO 02</div>
+        <h2 class="section-title" data-i="teleport_title">Teleportación Cuántica</h2>
+        <p class="section-sub" data-i="teleport_sub">3 qubits · par Bell · 2 bits clásicos · estado destruido</p>
       </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Un algoritmo cuántico que encuentra un elemento marcado en una lista desordenada de N elementos usando solo √N pasos — contra los N pasos que necesitaría cualquier algoritmo clásico.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Analogía</h3>
-          <p>Imagina que escondes una carta en uno de 1,000,000 sobres. Un humano necesitaría abrir sobre por sobre. Grover "ilumina" todos los sobres a la vez y en 1,000 pasos (√1,000,000) sabe cuál contiene la carta.</p>
-        </div>
-        <div class="explain-block">
-          <h3>¿Cómo funciona?</h3>
-          <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Superposición</strong> — puertas H ponen todos los N estados en paralelo.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">2</div><div><strong>Oráculo</strong> — invierte la fase del estado objetivo sin revelar cuál es.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">3</div><div><strong>Difusión</strong> — amplifica la amplitud del estado marcado y suprime los demás.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#7744cc">4</div><div><strong>Medición</strong> — el objetivo aparece con probabilidad cercana al 100%.</div></div>
+
+      <div class="split fade-in">
+        <!-- Left -->
+        <div>
+          <div class="glass" style="margin-bottom:12px">
+            <div class="glass-title" data-i="t_controls">Configuración</div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_state">Estado inicial del mensaje (q₀)</span>
+              <select class="ctrl-select" id="t-state" onchange="onTStateChange()">
+                <option value="plus">|+⟩ — superposición 50/50</option>
+                <option value="minus">|−⟩ — superposición fase opuesta</option>
+                <option value="0">|0⟩ — completamente cero</option>
+                <option value="1">|1⟩ — completamente uno</option>
+                <option value="custom">Personalizado (θ)</option>
+              </select>
+            </div>
+            <div id="t-custom-row" style="display:none" class="ctrl-row">
+              <span class="ctrl-label">θ — 0°=|0⟩ · 90°=|+⟩ · 180°=|1⟩</span>
+              <div class="ctrl-slider">
+                <input type="range" id="t-theta" min="0" max="180" value="90"
+                  oninput="document.getElementById('t-theta-val').textContent=this.value+'°'">
+                <span class="ctrl-val" id="t-theta-val">90°</span>
+              </div>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
+              <select class="ctrl-select" id="t-shots">
+                <option value="512">512</option>
+                <option value="1024" selected>1024</option>
+                <option value="2048">2048</option>
+              </select>
+            </div>
+            <button class="run-btn" id="t-run-btn" onclick="runTeleport()">
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+            </button>
+          </div>
+
+          <div id="t-results" style="display:none">
+            <div class="glass" style="margin-bottom:12px">
+              <div class="glass-title" data-i="raw_title">Mediciones brutas (q₂ q₁ q₀)</div>
+              <div id="t-raw-bars"></div>
+            </div>
+            <div class="glass">
+              <div class="glass-title" data-i="bob_title">Bob tras corrección X+Z</div>
+              <div id="t-bob-bars"></div>
+              <div class="info-box" id="t-summary" style="margin-top:10px"></div>
+            </div>
           </div>
         </div>
-        <div class="explain-block">
-          <h3>Las matemáticas</h3>
-          <div class="math-box">
-            <div class="math-line">Iteraciones óptimas: <code>k = ⌊ π/4 · √N ⌋</code></div>
-            <div class="math-line">Probabilidad de éxito: <code>P ≈ sin²( (2k+1) · arcsin(1/√N) )</code></div>
-            <div class="math-line">Aceleración: <code>speedup = N / k ≈ √N</code></div>
+
+        <!-- Right: 3-qubit visual + walk -->
+        <div class="viz-panel">
+          <div class="glass">
+            <div class="glass-title" data-i="t_walk_title">Protocolo paso a paso</div>
+            <div class="walk-steps" id="t-steps-pills">
+              <button class="wstep active" onclick="gotoTeleStep(0)">Prep</button>
+              <button class="wstep" onclick="gotoTeleStep(1)">Bell</button>
+              <button class="wstep" onclick="gotoTeleStep(2)">Alice</button>
+              <button class="wstep" onclick="gotoTeleStep(3)">Medir</button>
+              <button class="wstep" onclick="gotoTeleStep(4)">Bob ✓</button>
+            </div>
+            <div class="walk-info">
+              <div class="walk-label" id="t-walk-label">Mensaje preparado</div>
+              <div class="walk-desc" id="t-walk-desc">q₀ en estado |+⟩.</div>
+            </div>
+
+            <!-- 3 Bloch spheres -->
+            <div class="bloch-trio">
+              <div class="bloch-unit">
+                <canvas id="t-bloch0" width="110" height="110"></canvas>
+                <div class="bloch-unit-lbl" style="color:#44cc88">q₀ msg</div>
+              </div>
+              <div class="bloch-unit">
+                <canvas id="t-bloch1" width="110" height="110"></canvas>
+                <div class="bloch-unit-lbl" style="color:#4488ff">q₁ Alice</div>
+              </div>
+              <div class="bloch-unit">
+                <canvas id="t-bloch2" width="110" height="110"></canvas>
+                <div class="bloch-unit-lbl" style="color:#ff8844">q₂ Bob</div>
+              </div>
+            </div>
+            <div class="walk-nav" style="margin-top:12px">
+              <button id="t-walk-prev" onclick="teleWalkStep(-1)" disabled>←</button>
+              <button id="t-walk-next" onclick="teleWalkStep(1)">→</button>
+            </div>
+          </div>
+
+          <div class="glass">
+            <div class="glass-title">Circuito cuántico</div>
+            <div class="circuit-wrap" id="t-circuit-walk"></div>
           </div>
         </div>
-        <div class="explain-block">
-          <h3>Resultados reales del proyecto</h3>
-          <table class="results-table">
-            <thead><tr><th>Configuración</th><th>Objetivo</th><th>Shots</th><th>Encontrado</th></tr></thead>
-            <tbody>
-              <tr><td>2 qubits</td><td><code>|11⟩</code></td><td>1024</td><td class="green-text">1024/1024 (100%)</td></tr>
-              <tr><td>4 qubits</td><td><code>|1111⟩</code></td><td>1024</td><td class="green-text">980/1024 (96%)</td></tr>
-              <tr><td>16 qubits</td><td><code>|1111…⟩</code></td><td>1024</td><td class="green-text">~96% (201 iters)</td></tr>
-            </tbody>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ████ STEANE ████ -->
+  <section class="exp-section" id="sec-steane" data-exp="steane">
+    <div class="section-inner">
+      <div class="fade-in">
+        <div class="section-badge" style="--sec-color:var(--purple)">🛡 ALGORITMO 03</div>
+        <h2 class="section-title" data-i="steane_title">Steane [7,1,3] — Corrección de Error</h2>
+        <p class="section-sub" data-i="steane_sub">1 qubit lógico · 7 físicos · 6 ancillas · corrige cualquier error unitario</p>
+      </div>
+
+      <div class="split fade-in">
+        <!-- Left -->
+        <div>
+          <div class="glass" style="margin-bottom:12px">
+            <div class="glass-title" data-i="s_controls">Configuración</div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_errq">Qubit con error (−1 = sin error)</span>
+              <div class="ctrl-slider">
+                <input type="range" id="s-errq" min="-1" max="6" value="3" oninput="updateSteaneLabel()">
+                <span class="ctrl-val" id="s-errq-val">d[3]</span>
+              </div>
+              <div class="ctrl-hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X en d[3]</div>
+            </div>
+            <div class="ctrl-row">
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
+              <select class="ctrl-select" id="s-shots">
+                <option value="512">512</option>
+                <option value="1024" selected>1024</option>
+                <option value="2048">2048</option>
+              </select>
+            </div>
+            <button class="run-btn" id="s-run-btn" onclick="runSteane()">
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
+            </button>
+          </div>
+
+          <div id="s-results" style="display:none">
+            <div class="glass" style="margin-bottom:12px">
+              <div class="glass-title" data-i="syndrome_title">Síndrome (6 ancillas)</div>
+              <div class="syn-bits" id="s-syn-bits"></div>
+              <div id="s-syn-label" style="font-size:12px;color:var(--dim);margin-bottom:8px"></div>
+              <div class="glass-title" style="margin-top:10px" data-i="logical_title">Qubit lógico tras corrección</div>
+              <div id="s-logical-bars"></div>
+              <div class="info-box" id="s-summary" style="margin-top:10px"></div>
+            </div>
+            <!-- Syndrome map -->
+            <div class="glass">
+              <div class="glass-title" data-i="syndrome_map">Mapa de síndromes</div>
+              <div id="s-syn-map" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:5px"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: qubit grid + circuit -->
+        <div class="viz-panel">
+          <div class="glass">
+            <div class="glass-title" data-i="s_grid_title">7 qubits físicos</div>
+            <div class="steane-grid" id="s-qubit-grid"></div>
+            <div class="glass-title" style="margin-top:12px" data-i="s_ancilla_title">6 ancillas de síndrome</div>
+            <div class="ancilla-row" id="s-ancilla-row"></div>
+          </div>
+          <div class="glass">
+            <div class="glass-title">Circuito cuántico</div>
+            <div class="circuit-wrap" id="s-circuit"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- ████ SPEEDUP ████ -->
+  <section class="exp-section" id="sec-speedup" data-exp="speedup">
+    <div class="section-inner">
+      <div class="fade-in">
+        <div class="section-badge" style="--sec-color:var(--amber)">📊 COMPARATIVA</div>
+        <h2 class="section-title">Cuántico vs Clásico</h2>
+        <p class="section-sub">Aceleración cuadrática del algoritmo de Grover: O(√N) vs O(N)</p>
+      </div>
+      <div class="speedup-grid fade-in">
+        <div class="glass" style="overflow-x:auto">
+          <div class="glass-title">Tabla de aceleración</div>
+          <table class="sp-table">
+            <thead><tr><th>Config</th><th>N</th><th>Clásico</th><th>Cuántico</th><th>Speedup</th></tr></thead>
+            <tbody id="speedup-tbody"></tbody>
           </table>
         </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         TELEPORT LAB
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-teleport-lab">
-      <div class="page-header">
-        <h2>🔗 Teleportación Cuántica — Laboratorio</h2>
-        <p class="page-sub">3 qubits · par Bell entrelazado · 2 bits clásicos</p>
-      </div>
-
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Estado inicial del mensaje (q₀)</label>
-          <select id="t-state" class="select-input" onchange="onTStateChange()">
-            <option value="plus">|+⟩ — superposición 50/50</option>
-            <option value="minus">|−⟩ — superposición (fase opuesta)</option>
-            <option value="0">|0⟩ — completamente cero</option>
-            <option value="1">|1⟩ — completamente uno</option>
-            <option value="custom">Personalizado (ángulo θ)</option>
-          </select>
-        </div>
-        <div class="card" id="t-custom-card" style="display:none">
-          <label class="field-label">θ — 0°=|0⟩ · 90°=ecuador · 180°=|1⟩</label>
-          <div class="slider-row">
-            <input type="range" id="t-theta" min="0" max="180" value="90"
-              oninput="document.getElementById('t-theta-val').textContent=this.value+'°'">
-            <span class="slider-val" id="t-theta-val">90°</span>
-          </div>
-        </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="t-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Bloch walkthrough 3 qubits -->
-      <div class="walk-panel">
-        <div class="walk-header">
-          <span class="walk-title" id="t-walk-label">Mensaje preparado</span>
-          <span class="walk-step" id="t-walk-step">1/5</span>
-        </div>
-        <p class="walk-desc" id="t-walk-desc">q₀ en estado |+⟩.</p>
-        <div class="bloch-row">
-          <div class="bloch-wrap">
-            <canvas id="t-bloch0" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#44cc88">q₀ msg</div>
-          </div>
-          <div class="bloch-wrap">
-            <canvas id="t-bloch1" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#4488ff">q₁ Alice</div>
-          </div>
-          <div class="bloch-wrap">
-            <canvas id="t-bloch2" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#ff8844">q₂ Bob</div>
-          </div>
-          <div class="walk-circuit" id="t-circuit-walk" style="flex:1;min-width:200px"></div>
-        </div>
-        <div class="walk-controls">
-          <button class="walk-btn" id="t-walk-prev" onclick="teleWalkStep(-1)" disabled>← Anterior</button>
-          <div class="step-dots" id="t-walk-dots"></div>
-          <button class="walk-btn" id="t-walk-next" onclick="teleWalkStep(1)">Siguiente →</button>
-        </div>
-      </div>
-
-      <button class="run-btn" id="t-run-btn" onclick="runTeleport()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
-
-      <div id="t-results" style="display:none">
-        <div class="results-header"><span>Resultados</span></div>
-        <div class="two-col">
-          <div>
-            <div class="col-title">Mediciones brutas (q₂ q₁ q₀)</div>
-            <div id="t-raw-bars"></div>
-          </div>
-          <div>
-            <div class="col-title">Bob después de corrección X+Z</div>
-            <div id="t-bob-bars"></div>
-          </div>
-        </div>
-        <div class="info-box" id="t-summary"></div>
-        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
-        <div id="t-circuit-result"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         TELEPORT EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-teleport-explain">
-      <div class="page-header">
-        <h2>📖 ¿Qué es la Teleportación Cuántica?</h2>
-      </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Transferir el estado exacto de un qubit de un lugar a otro sin moverlo físicamente. El qubit original es <strong>DESTRUIDO</strong> en el proceso. Solo la información viaja.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Analogía</h3>
-          <p>Imagina enviar una escultura LEGO a un amigo: (1) la desarmas, (2) anotas cómo era cada pieza, (3) envías esas instrucciones (2 bits clásicos), (4) tu amigo la reconstruye perfectamente. El original desaparece — pero el resultado es idéntico.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Los 3 qubits</h3>
-          <div class="qubit-table">
-            <div class="qubit-row"><div class="qubit-badge" style="background:#44cc88">q₀</div><div><strong>Mensaje</strong> — el estado a teleportar. Destruido al medirlo.</div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#4488ff">q₁</div><div><strong>Alice</strong> — su mitad del par entrelazado. Mide y envía 2 bits a Bob.</div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#ff8844">q₂</div><div><strong>Bob</strong> — recibe los 2 bits, aplica correcciones y obtiene el estado original.</div></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Resultado real del proyecto</h3>
-          <div class="result-callout">
-            <div>Mensaje preparado en |+⟩ → α = β = 1/√2 → 50% cada uno</div>
-            <div>Bob obtuvo: <strong>52% |0⟩ y 48% |1⟩</strong></div>
-            <div class="green-text">✓ Diferencia del 2% = ruido estadístico normal (1024 shots)</div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Concepto clave</h3>
-          <p>Ningún qubit viajó físicamente. El protocolo NO viola el límite de la velocidad de la luz porque los 2 bits clásicos se transmiten por medios convencionales.</p>
+        <div class="glass">
+          <div class="glass-title">Escala logarítmica</div>
+          <canvas id="speedup-canvas" style="width:100%;display:block"></canvas>
         </div>
       </div>
     </div>
+  </section>
 
-    <!-- ══════════════════════════════════════
-         STEANE LAB
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-steane-lab">
-      <div class="page-header">
-        <h2>🛡 Código Steane [7,1,3] — Laboratorio</h2>
-        <p class="page-sub">1 qubit lógico en 7 físicos · 6 ancillas de síndrome</p>
-      </div>
+  <div class="divider"></div>
 
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Qubit con error (−1 = sin error)</label>
-          <div class="slider-row">
-            <input type="range" id="s-errq" min="-1" max="6" value="3" oninput="updateSteaneLabel()">
-            <span class="slider-val" id="s-errq-val">d[3]</span>
-          </div>
-          <div class="hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X en d[3]</div>
+  <!-- ████ QUIZ ████ -->
+  <section class="exp-section" id="sec-quiz" data-exp="speedup">
+    <div class="section-inner">
+      <div class="fade-in">
+        <div class="section-badge" style="--sec-color:var(--cyan)">🧠 QUIZ</div>
+        <h2 class="section-title">¿Cuánto aprendiste?</h2>
+        <p class="section-sub">7 preguntas sobre los tres experimentos cuánticos</p>
+      </div>
+      <div class="quiz-card glass fade-in">
+        <div class="quiz-progress" id="quiz-progress"></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;font-size:11px;color:var(--dim)">
+          <span id="quiz-q-num">1/7</span>
+          <span id="quiz-score-live">Score: 0</span>
         </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="s-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Visual qubit grid -->
-      <div class="card" style="margin-bottom:16px">
-        <label class="field-label">Estado de los 7 qubits físicos</label>
-        <div id="s-qubit-grid" class="qgrid"></div>
-      </div>
-
-      <button class="run-btn" id="s-run-btn" onclick="runSteane()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
-
-      <div id="s-results" style="display:none">
-        <div class="results-header"><span>Resultados</span></div>
-        <div class="two-col">
-          <div>
-            <div class="col-title">Síndrome medido (6 ancillas)</div>
-            <div id="s-syndrome-display"></div>
-          </div>
-          <div>
-            <div class="col-title">Qubit lógico tras corrección</div>
-            <div id="s-logical-bars"></div>
-          </div>
-        </div>
-        <div class="info-box" id="s-summary"></div>
-        <div class="col-title" style="margin-top:16px">Mapa de síndromes [7,1,3]</div>
-        <div id="s-syndrome-map"></div>
-        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
-        <div id="s-circuit-display"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STEANE EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-steane-explain">
-      <div class="page-header">
-        <h2>📖 Corrección de Error Steane [7,1,3]</h2>
-      </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Una forma de proteger 1 qubit lógico usando 7 qubits físicos. Si CUALQUIER qubit se corrompe por ruido de hardware, el código detecta exactamente cuál es y lo corrige — sin mirar directamente el valor del qubit.</p>
-        </div>
-        <div class="explain-block">
-          <h3>¿Por qué es necesario?</h3>
-          <p>Los qubits reales son frágiles: la radiación de fondo, las vibraciones térmicas y la decoherencia los corrompen constantemente. No puedes copiar un qubit (teorema de no-clonación), así que hay que protegerlo distribuyendo su información.</p>
-        </div>
-        <div class="explain-block">
-          <h3>[7, 1, 3] — ¿qué significan?</h3>
-          <div class="param-table">
-            <div class="param-row"><code class="param-num">7</code><span>qubits físicos usados</span></div>
-            <div class="param-row"><code class="param-num">1</code><span>qubit lógico codificado</span></div>
-            <div class="param-row"><code class="param-num">3</code><span>distancia mínima → corrige ⌊(3−1)/2⌋ = 1 error</span></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Pasos del algoritmo</h3>
-          <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Codificación</strong> — H en d[0..2] + cadena CNOT distribuye |0_L⟩ en 7 qubits.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc2222">2</div><div><strong>Error</strong> — puerta X en d[i] simula ruido de hardware (bit-flip).</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">3</div><div><strong>Síndrome</strong> — 6 ancillas miden paridad de grupos sin leer los datos.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">4</div><div><strong>Corrección</strong> — el patrón señala el qubit culpable → X lo restaura.</div></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Resultado real del proyecto</h3>
-          <div class="result-callout">
-            <div>13 qubits en total (7 datos + 6 ancillas) · 1024 shots</div>
-            <div>Síndrome <code>001110</code> → identifica exactamente d[3]</div>
-            <div class="green-text">✓ Mismo principio en hardware cuántico real de IBM</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         SPEEDUP
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-speedup">
-      <div class="page-header">
-        <h2>📊 Cuántico vs Clásico</h2>
-        <p class="page-sub">Tabla de aceleración del Algoritmo de Grover</p>
-      </div>
-      <div class="speedup-formula">
-        <strong>Fórmula:</strong>
-        <code>iteraciones = ⌊ π/4 · √N ⌋</code> &nbsp;·&nbsp;
-        <code>aceleración = N ÷ iteraciones</code>
-      </div>
-      <div class="table-wrap">
-        <table class="speedup-table">
-          <thead>
-            <tr><th>Algoritmo</th><th>Estados N</th><th>Clásico</th><th>Cuántico</th><th>Aceleración</th></tr>
-          </thead>
-          <tbody id="speedup-tbody"></tbody>
-        </table>
-      </div>
-      <p class="speedup-note">Cada qubit añadido duplica el espacio de búsqueda, pero el algoritmo cuántico solo crece √2 en iteraciones.</p>
-      <div id="speedup-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
-        <canvas id="speedup-canvas"></canvas>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         QUIZ
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-quiz">
-      <div class="page-header">
-        <h2>🧠 Quiz Cuántico</h2>
-        <p class="page-sub">Pon a prueba tus conocimientos sobre los tres experimentos</p>
-      </div>
-      <div class="quiz-wrap">
-        <div class="quiz-top">
-          <div class="quiz-progress-row">
-            <div class="step-dots" id="quiz-progress"></div>
-            <span class="walk-step" id="quiz-q-num">1/7</span>
-          </div>
-        </div>
-        <div class="quiz-q" id="quiz-q-text"></div>
-        <div class="quiz-opts" id="quiz-opts"></div>
-        <div class="quiz-explanation" id="quiz-explanation" style="display:none"></div>
-        <button class="run-btn" id="quiz-next-btn" onclick="quizNext()" style="display:none;margin-top:12px">
-          <span class="run-icon">→</span> Siguiente pregunta
+        <div class="quiz-q-text" id="quiz-q-text"></div>
+        <div class="quiz-options" id="quiz-opts"></div>
+        <div class="quiz-exp" id="quiz-exp"></div>
+        <button class="run-btn" id="quiz-next-btn" onclick="quizNext()" style="display:none">
+          <span class="run-icon">→</span> Siguiente
         </button>
         <div id="quiz-score-wrap"></div>
-        <button class="run-btn" onclick="startQuiz()" style="margin-top:8px">
-          <span class="run-icon">↺</span> Iniciar quiz
-        </button>
       </div>
     </div>
+  </section>
 
-    <!-- ══════════════════════════════════════
-         HISTORIAL
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-history">
-      <div class="page-header">
-        <h2>🕑 Historial de Experimentos</h2>
-        <p class="page-sub">Tus últimas simulaciones (se guarda en el navegador)</p>
-      </div>
-      <div id="history-list"></div>
-    </div>
+  <!-- Footer -->
+  <div style="text-align:center;padding:40px 20px;color:var(--dim);font-size:12px;position:relative;z-index:10">
+    ⚛ Quantum Computing Lab · Qiskit 2.5.2 · AerSimulator ·
+    <a href="https://github.com/C0z1/quantum-web" style="color:var(--blue);text-decoration:none" target="_blank">GitHub ↗</a>
+  </div>
 
-    <!-- ══════════════════════════════════════
-         3D
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-visual3d">
-      <div class="page-header">
-        <h2>🌐 Visualización 3D Interactiva</h2>
-        <p class="page-sub">Esferas de Bloch, entrelazamiento y amplitudes animadas</p>
-      </div>
-      <div class="viz3d-frame-wrap">
-        <iframe src="visual3d.html" title="Quantum 3D Visualizer"></iframe>
-      </div>
-    </div>
-
-  </main>
-</div>
+</div><!-- /journey -->
 
 <script src="i18n.js"></script>
 <script src="sim.js"></script>
 <script src="ui.js"></script>
 <script>
-  // Boot walkthroughs after DOM ready
-  window.addEventListener('load', () => {
-    // Defer until app is shown
-    const orig = startApp;
-    window.startApp = function(){
-      orig();
-      setTimeout(()=>{ initGroverWalk(); initTeleWalk(); renderSteaneGrid(3); startQuiz(); }, 100);
-    };
+/* ── Particle background ── */
+(function(){
+  const c=document.getElementById('bgcanvas');
+  const ctx=c.getContext('2d');
+  let W,H,pts=[];
+  function resize(){ W=c.width=innerWidth; H=c.height=innerHeight; }
+  function init(){
+    pts=Array.from({length:120},()=>({
+      x:Math.random()*W,y:Math.random()*H,
+      vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,
+      r:Math.random()*1.5+.3,
+    }));
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0)p.x=W; if(p.x>W)p.x=0;
+      if(p.y<0)p.y=H; if(p.y>H)p.y=0;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(80,120,255,.6)';ctx.fill();
+    });
+    // connect nearby
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y;
+        const d=Math.sqrt(dx*dx+dy*dy);
+        if(d<100){
+          ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);
+          ctx.strokeStyle=`rgba(80,120,255,${(1-d/100)*.12})`;ctx.lineWidth=.5;ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize',()=>{resize();init();});
+  resize();init();draw();
+})();
+
+/* ── Enter app ── */
+function enterApp(){
+  document.getElementById('hero').style.transition='opacity .5s';
+  document.getElementById('hero').style.opacity='0';
+  setTimeout(()=>{
+    document.getElementById('hero').style.display='none';
+    document.getElementById('journey').style.display='block';
+    document.getElementById('topnav').classList.add('visible');
+    document.getElementById('section-dots').classList.add('visible');
+    document.getElementById('scroll-hint').style.display='none';
+    // init all
+    updateGroverMeta();
+    updateSteaneLabel();
+    initSteaneGrid();
+    buildSpeedupTable();
+    setTimeout(drawSpeedupChart,100);
+    startQuiz();
+    initGroverWalk();
+    initTeleWalk();
+    // fade-in observer
+    const obs=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+    },{threshold:.15});
+    document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+    // scroll-based nav highlight
+    window.addEventListener('scroll',onScroll,{passive:true});
+    onScroll();
+  },500);
+}
+
+/* ── Scroll tracking ── */
+const SECS=['grover','teleport','steane','speedup','quiz'];
+function onScroll(){
+  const nav=document.getElementById('topnav');
+  nav.classList.toggle('visible', scrollY>100);
+  const dots=document.querySelectorAll('.sdot');
+  const tabs=document.querySelectorAll('.nav-tab');
+  let active=0;
+  SECS.forEach((id,i)=>{
+    const el=document.getElementById('sec-'+id);
+    if(!el) return;
+    if(el.getBoundingClientRect().top<window.innerHeight/2) active=i;
   });
+  dots.forEach((d,i)=>d.classList.toggle('active',i===active));
+  tabs.forEach((t,i)=>t.classList.toggle('active',i===active));
+}
+
+function scrollTo(id){
+  document.getElementById('sec-'+id)?.scrollIntoView({behavior:'smooth'});
+}
 </script>
 </body>
 </html>
