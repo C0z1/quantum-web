@@ -1,529 +1,676 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>⚛ Quantum Computing Lab</title>
-<link rel="stylesheet" href="style.css">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Felix Yael Tavera Ramírez — AI & Software Engineer</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg:#020810;--bg2:#050d1a;--bg3:#091525;
+  --fg:#cce4f7;--fg2:#7aa8cc;--muted:#2d5070;
+  --border:#0a1c30;--border2:#102840;
+  --amber:#38b6ff;--amber2:#1a8fd1;--amber-dim:#38b6ff20;
+  --cyan:#7dd3fc;--cyan-dim:#7dd3fc18;--green:#38b6ff;--violet:#1e90d4;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font-family:var(--disp);overflow-x:hidden}
+::-webkit-scrollbar{width:3px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 48px;background:rgba(3,8,18,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.logo{font-family:var(--mono);font-size:12px;letter-spacing:.15em;color:var(--amber);display:flex;align-items:center;gap:8px}
+.logo-dot{width:6px;height:6px;border-radius:50%;background:#38b6ff;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--muted);text-decoration:none;transition:color .2s}
+.nav-links a:hover,.nav-links a.active{color:var(--cyan)}
+.nav-status{font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:#38b6ff}
+.burger{display:none;flex-direction:column;gap:5px;cursor:pointer;background:none;border:none;padding:4px}
+.burger span{display:block;width:20px;height:1px;background:var(--muted);transition:.2s}
+.mnav{display:none;position:fixed;top:54px;left:0;right:0;background:rgba(3,8,18,.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);z-index:99;flex-direction:column;padding:16px 0}
+.mnav.open{display:flex}
+.mnav a{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--muted);text-decoration:none;padding:14px 32px;border-bottom:1px solid #ffffff04;transition:.2s}
+.mnav a:hover{color:var(--cyan)}
+
+/* HERO */
+#hero{position:relative;width:100%;height:100vh;min-height:640px;display:flex;align-items:center;overflow:hidden;cursor:default}
+.vignette{position:absolute;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at 60% 50%,transparent 20%,rgba(2,8,16,.85) 100%)}
+.hero-ov{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;flex-direction:column;justify-content:center;padding:0 52px;z-index:10;pointer-events:none}
+.eyebrow{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--amber);opacity:.7;margin-bottom:20px}
+.hname{font-family:var(--disp);font-size:clamp(44px,6vw,76px);font-weight:700;line-height:.95;color:#fff;letter-spacing:-.03em;margin-bottom:10px}
+.hname .sur{display:block;font-weight:300;color:var(--fg2);opacity:.75}
+.hrole{font-family:var(--mono);font-size:12px;color:var(--cyan);letter-spacing:.18em;margin-bottom:22px;min-height:20px}
+.tcur{display:inline-block;width:2px;height:1em;background:var(--cyan);margin-left:2px;vertical-align:middle;animation:blink 1s step-end infinite}
+@keyframes blink{50%{opacity:0}}
+.hbio{font-size:14px;font-weight:300;color:var(--fg2);line-height:1.85;max-width:360px;margin-bottom:38px;opacity:.75}
+.hbtns{display:flex;gap:14px;pointer-events:all}
+.btn-p{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:#fff;background:linear-gradient(135deg,#1a6fa8,#38b6ff);border:none;padding:13px 28px;border-radius:2px;cursor:pointer;transition:box-shadow .25s,opacity .2s}
+.btn-p:hover{box-shadow:0 0 28px #38b6ff55;opacity:.9}
+.btn-g{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--cyan);background:transparent;border:1px solid #38b6ff28;padding:12px 28px;border-radius:2px;cursor:pointer;transition:border-color .2s}
+.btn-g:hover{border-color:#38b6ff55}
+
+/* HERO BG */
+#hero{background:#020810}
+#hero::before{content:'';position:absolute;inset:0;z-index:1;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%,#38b6ff55 0%,transparent 100%),
+    radial-gradient(1px 1px at 34% 72%,#7dd3fc44 0%,transparent 100%),
+    radial-gradient(1px 1px at 56% 9%,#38b6ff33 0%,transparent 100%),
+    radial-gradient(1px 1px at 78% 43%,#7dd3fc55 0%,transparent 100%),
+    radial-gradient(1px 1px at 8%  61%,#38b6ff44 0%,transparent 100%),
+    radial-gradient(1px 1px at 91% 27%,#7dd3fc33 0%,transparent 100%),
+    radial-gradient(1px 1px at 45% 88%,#38b6ff22 0%,transparent 100%),
+    radial-gradient(1px 1px at 67% 55%,#7dd3fc44 0%,transparent 100%),
+    radial-gradient(1px 1px at 23% 39%,#38b6ff33 0%,transparent 100%),
+    radial-gradient(1px 1px at 82% 80%,#7dd3fc22 0%,transparent 100%);
+}
+
+/* GAME BLACK HOLE CANVAS */
+#bh-wrap{position:absolute;right:-2%;top:0;bottom:0;width:58%;display:flex;align-items:center;justify-content:center;z-index:2;pointer-events:none}
+#bh-canvas{display:block;filter:blur(0px)}
+
+/* SHARED */
+section{padding:88px 0;position:relative}
+.wrap{max-width:1080px;margin:0 auto;padding:0 52px}
+.neb{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.neb::before{content:'';position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,#7c55f008 0%,transparent 70%);top:-100px;right:10%;filter:blur(80px)}
+.neb::after{content:'';position:absolute;width:400px;height:400px;border-radius:50%;background:radial-gradient(circle,#00bedd06 0%,transparent 70%);bottom:-80px;left:5%;filter:blur(60px)}
+.neb-a::before{background:radial-gradient(circle,#f0a40008 0%,transparent 70%)}
+.slabel{font-family:var(--mono);font-size:9px;letter-spacing:.22em;color:var(--amber);opacity:.55;margin-bottom:12px}
+.stitle{font-family:var(--disp);font-size:clamp(24px,3vw,36px);font-weight:600;color:#fff;letter-spacing:-.025em;line-height:1.1;margin-bottom:44px}
+.stitle em{font-style:normal;color:var(--amber)}
+.rule{height:1px;background:linear-gradient(90deg,transparent,var(--border2) 20%,var(--border2) 80%,transparent)}
+
+/* tag */
+.tag{font-family:var(--mono);font-size:9px;letter-spacing:.04em;color:var(--muted);background:var(--border);padding:4px 9px;border-radius:2px;transition:color .2s}
+
+/* WHOAMI */
+#whoami{background:var(--bg)}
+.who-text p{font-size:14px;line-height:1.9;color:var(--fg2);margin-bottom:14px}
+.who-text strong{color:var(--fg);font-weight:500}
+
+/* SKILLS */
+#skills{background:var(--bg2)}
+.skills-cols{display:grid;grid-template-columns:1fr 1fr;gap:52px}
+.scat{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--amber);opacity:.55;margin-bottom:10px}
+.tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:28px}
+.stag{font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--fg2);background:var(--bg3);border:1px solid var(--border2);padding:5px 11px;border-radius:2px;transition:color .2s,border-color .2s}
+.stag:hover{color:var(--amber);border-color:var(--amber-dim)}
+.profs{display:grid;gap:12px}
+.prow{display:grid;grid-template-columns:160px 1fr 36px;align-items:center;gap:14px}
+.plbl{font-family:var(--mono);font-size:10px;color:var(--fg2)}
+.pbar{height:2px;background:var(--border);border-radius:1px;overflow:hidden}
+.pfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,#1a6fa8,#38b6ff);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.ppct{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right}
+
+/* EXPERIENCE */
+#experience{background:var(--bg)}
+.exp-list{display:flex;flex-direction:column}
+.exp-row{display:grid;grid-template-columns:160px 1fr;gap:48px;padding:36px 0;border-bottom:1px solid var(--border)}
+.exp-row:last-child{border-bottom:none}
+.exp-chip{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--amber);letter-spacing:.06em;padding:4px 10px;border:1px solid var(--amber-dim);background:var(--amber-dim);border-radius:2px;margin-bottom:6px}
+.exp-type{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em}
+.exp-role{font-family:var(--disp);font-size:16px;font-weight:500;color:var(--fg);letter-spacing:-.015em;margin-bottom:4px}
+.exp-co{font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:.16em;margin-bottom:12px;opacity:.8}
+.exp-desc{font-size:13px;color:var(--fg2);line-height:1.85;max-width:540px}
+
+/* AI */
+#ai{background:var(--bg2)}
+.ai-tags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:32px}
+.aitag{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--cyan);background:var(--cyan-dim);border:1px solid #00bedd20;padding:5px 12px;border-radius:2px}
+.ai-card{background:var(--bg3);border:1px solid var(--border2);border-radius:2px;padding:30px;position:relative;overflow:hidden}
+.ai-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--cyan),transparent);opacity:.3}
+.ai-clabel{font-family:var(--mono);font-size:8px;letter-spacing:.22em;color:var(--cyan);opacity:.5;margin-bottom:8px}
+.ai-ctitle{font-family:var(--disp);font-size:16px;font-weight:500;color:var(--fg);margin-bottom:3px}
+.ai-csub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;margin-bottom:12px}
+.ai-cdesc{font-size:13px;color:var(--fg2);line-height:1.8}
+
+/* PROJECTS */
+#projects{background:var(--bg)}
+.proj-list{display:flex;flex-direction:column;border:1px solid var(--border);overflow:hidden}
+.prow{display:grid;grid-template-columns:52px 1fr auto;align-items:start;gap:24px;padding:28px;background:var(--bg);border-bottom:1px solid var(--border);transition:background .2s;position:relative}
+.prow:last-child{border-bottom:none}
+.prow::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--amber);opacity:0;transition:opacity .2s}
+.prow:hover{background:var(--bg2)}
+.prow:hover::before{opacity:1}
+.prow:hover .tag{color:var(--fg2)}
+.pnum{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.08em;padding-top:2px}
+.pname{font-family:var(--disp);font-size:15px;font-weight:500;color:var(--fg);margin-bottom:6px;letter-spacing:-.01em}
+.pdesc{font-size:13px;color:var(--fg2);line-height:1.75;max-width:520px;margin-bottom:12px}
+.ptags{display:flex;flex-wrap:wrap;gap:6px}
+.pmeta{text-align:right;padding-top:2px}
+.pstatus{font-family:var(--mono);font-size:8px;letter-spacing:.16em;color:var(--green);opacity:.7;margin-bottom:6px}
+.plink{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--cyan);opacity:.5;text-decoration:none;transition:opacity .2s}
+.plink:hover{opacity:1}
+
+/* STACK */
+#stack{background:var(--bg2)}
+.stack-drivers{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:36px}
+.dtag{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--fg2);background:var(--bg3);border:1px solid var(--border2);padding:5px 12px;border-radius:2px;transition:color .2s,border-color .2s}
+.dtag:hover{color:var(--amber);border-color:var(--amber-dim)}
+.depth{display:grid;gap:12px}
+.drow{display:grid;grid-template-columns:148px 1fr 36px;align-items:center;gap:14px}
+.dlbl{font-family:var(--mono);font-size:10px;color:var(--fg2)}
+.dbar{height:2px;background:var(--border);border-radius:1px;overflow:hidden}
+.dfill{height:100%;width:0;border-radius:1px;background:linear-gradient(90deg,#1a6fa8,#38b6ff);transition:width 1.2s cubic-bezier(.16,1,.3,1)}
+.dpct{font-family:var(--mono);font-size:9px;color:var(--muted);text-align:right}
+
+/* CONTACT */
+#contact{background:var(--bg);padding:88px 0 120px}
+.con-grid{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:start}
+.con-text p{font-size:14px;color:var(--fg2);line-height:1.85;margin-bottom:22px}
+.con-links{display:flex;flex-direction:column;gap:8px;margin-top:24px}
+.clink{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--muted);text-decoration:none;display:flex;align-items:center;gap:12px;transition:color .2s}
+.carr{font-size:10px;opacity:.4;transition:opacity .2s,transform .2s}
+.clink:hover{color:var(--amber)}
+.clink:hover .carr{opacity:1;transform:translateX(4px)}
+.con-card{background:var(--bg2);border:1px solid var(--border2);border-radius:2px;padding:32px;position:relative;overflow:hidden}
+.con-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--amber),var(--cyan));opacity:.35}
+.con-clabel{font-family:var(--mono);font-size:8px;letter-spacing:.22em;color:var(--amber);opacity:.5;margin-bottom:14px}
+.con-email{font-family:var(--disp);font-size:19px;font-weight:600;color:#fff;margin-bottom:8px;letter-spacing:-.02em}
+.con-sub{font-size:13px;color:var(--fg2);margin-bottom:24px;line-height:1.6}
+.con-card .btn-p{width:100%;text-align:center}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:20px 52px;display:flex;justify-content:space-between;align-items:center}
+.fcopy,.fcoord{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em}
+
+/* BACK TOP */
+#btop{position:fixed;bottom:32px;right:28px;z-index:90;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--amber);background:var(--bg2);border:1px solid var(--border2);padding:10px 14px;border-radius:2px;cursor:pointer;opacity:0;transform:translateY(8px);transition:opacity .3s,transform .3s,border-color .2s;pointer-events:none}
+#btop.vis{opacity:1;transform:none;pointer-events:all}
+#btop:hover{border-color:var(--amber)}
+
+/* REVEAL */
+.r{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+.r.in{opacity:1;transform:none}
+.d1{transition-delay:.07s}.d2{transition-delay:.14s}.d3{transition-delay:.21s}
+
+/* RESPONSIVE */
+@media(max-width:860px){
+  nav{padding:0 20px}
+  .nav-links{display:none}
+  .burger{display:flex}
+  .wrap{padding:0 20px}
+  .hero-ov{padding:0 20px}
+  .hname{font-size:clamp(36px,10vw,52px)}
+  .who-grid,.con-grid{grid-template-columns:1fr;gap:36px}
+  .skills-cols{grid-template-columns:1fr;gap:32px}
+  .exp-row{grid-template-columns:1fr;gap:8px}
+  .prow{grid-template-columns:40px 1fr;gap:14px}
+  .pmeta{display:none}
+  footer{padding:18px 20px;flex-direction:column;gap:6px;text-align:center}
+}
+</style>
 </head>
 <body>
 
-<!-- SPLASH -->
-<div id="splash">
-  <div class="splash-inner">
-    <div class="splash-icon">⚛</div>
-    <h1>Quantum Computing Lab</h1>
-    <p>Qiskit 2.5.2 · AerSimulator · Visualización interactiva</p>
-    <div class="lang-btns">
-      <button onclick="setLang('es')" class="lang-btn active" id="btn-es">🇲🇽 Español</button>
-      <button onclick="setLang('en')" class="lang-btn" id="btn-en">🇺🇸 English</button>
+<nav>
+  <div class="logo"><div class="logo-dot"></div>FYTR.DEV</div>
+  <ul class="nav-links">
+    <li><a href="#whoami">WHOAMI</a></li>
+    <li><a href="#skills">SKILLS</a></li>
+    <li><a href="#experience">EXP</a></li>
+    <li><a href="#ai">AI</a></li>
+    <li><a href="#projects">PROJECTS</a></li>
+    <li><a href="#stack">STACK</a></li>
+    <li><a href="#contact">CONTACT</a></li>
+  </ul>
+  <div class="nav-status">● AVAILABLE</div>
+  <button class="burger" id="burger"><span></span><span></span><span></span></button>
+</nav>
+
+<nav class="mnav" id="mnav">
+  <a href="#whoami">WHOAMI</a><a href="#skills">SKILLS</a><a href="#experience">EXP</a>
+  <a href="#ai">AI</a><a href="#projects">PROJECTS</a><a href="#stack">STACK</a><a href="#contact">CONTACT</a>
+</nav>
+
+<button id="btop">▲ TOP</button>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="vignette"></div>
+  <div id="bh-wrap"><canvas id="bh-canvas"></canvas></div>
+  <div class="hero-ov">
+    <div class="eyebrow">AI · FULL STACK · ML</div>
+    <div class="hname">Felix Yael<span class="sur">Tavera Ramírez</span></div>
+    <div class="hrole" id="hrole"></div>
+    <div class="hbio">Investigo,Aprendo y Construyo tecnologías para mejorar la vida de las personas.</div>
+    <div class="hbtns">
+      <button class="btn-p" onclick="document.getElementById('projects').scrollIntoView({behavior:'smooth'})">VER PROYECTOS</button>
+      <button class="btn-g" onclick="document.getElementById('contact').scrollIntoView({behavior:'smooth'})">CONTACTO</button>
     </div>
-    <button class="start-btn" onclick="startApp()">
-      <span id="start-label">Iniciar</span> →
-    </button>
   </div>
-</div>
+</section>
 
-<!-- APP -->
-<div id="app" style="display:none">
+<div class="rule"></div>
 
-  <!-- Hamburger mobile -->
-  <button id="hamburger" aria-label="Menu">☰</button>
-
-  <!-- SIDEBAR -->
-  <aside id="sidebar">
-    <div class="sidebar-header">
-      <span class="sidebar-icon">⚛</span>
-      <span class="sidebar-title">Quantum Lab</span>
+<!-- WHOAMI -->
+<section id="whoami">
+  <div class="neb neb-a"></div>
+  <div class="wrap">
+    <div class="slabel r">WHOAMI</div>
+    <div class="stitle r d1">AI engineer,<br>product <em>builder</em></div>
+    <div class="who-text r d2" style="max-width:640px">
+      <p>I create and build software that <strong>helps users and companies getting things done easier</strong> — complete systems that scale.</p>
+      <p>Three fronts: AI product engineering (multimodal assistants, LLM integration, tool execution), full-stack delivery (frontend + backend, auth, APIs, deployment) and data & ML (prediction pipelines, feature engineering, applied models).</p>
     </div>
-    <nav>
-      <div class="nav-section">⚛ GROVER</div>
-      <a class="nav-item active" onclick="showPage('grover-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('grover-explain')">📖 Explicación</a>
+  </div>
+</section>
 
-      <div class="nav-section">🔗 TELEPORTACIÓN</div>
-      <a class="nav-item" onclick="showPage('teleport-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('teleport-explain')">📖 Explicación</a>
+<div class="rule"></div>
 
-      <div class="nav-section">🛡 STEANE</div>
-      <a class="nav-item" onclick="showPage('steane-lab')">🔬 Laboratorio</a>
-      <a class="nav-item" onclick="showPage('steane-explain')">📖 Explicación</a>
-
-      <div class="nav-section">📊 EXTRAS</div>
-      <a class="nav-item" onclick="showPage('speedup')">📊 Cuántico vs Clásico</a>
-      <a class="nav-item" onclick="showPage('quiz')">🧠 Quiz</a>
-      <a class="nav-item" onclick="showPage('history')">🕑 Historial</a>
-      <a class="nav-item" onclick="showPage('visual3d')">🌐 Visualización 3D</a>
-    </nav>
-    <div class="sidebar-footer">
-      <button class="lang-toggle" onclick="toggleLang()" id="lang-toggle-btn">🇺🇸 English</button>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main id="main">
-
-    <!-- ══════════════════════════════════════
-         GROVER LAB
-    ══════════════════════════════════════ -->
-    <div class="page active" id="page-grover-lab">
-      <div class="page-header">
-        <h2>⚛ Grover Lab — Búsqueda Cuántica</h2>
-        <p class="page-sub">Encuentra 1 elemento entre N estados en √N pasos</p>
-      </div>
-
-      <!-- Controls -->
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Número de qubits</label>
-          <div class="slider-row">
-            <input type="range" id="g-qubits" min="2" max="16" value="4" oninput="updateGroverMeta()">
-            <span class="slider-val" id="g-qubits-val">4</span>
-          </div>
-          <div class="hint" id="g-space-hint">Espacio: 16 estados</div>
+<!-- SKILLS -->
+<section id="skills">
+  <div class="neb"></div>
+  <div class="wrap">
+    <div class="slabel r">SKILLS</div>
+    <div class="stitle r d1">Languages &amp; <em>tooling</em></div>
+    <div class="skills-cols r d2">
+      <div>
+        <div class="scat">LANGUAGES</div>
+        <div class="tags">
+          <span class="stag">Python</span><span class="stag">TypeScript</span><span class="stag">Dart</span><span class="stag">SQL</span><span class="stag">Bash</span>
         </div>
-        <div class="card">
-          <label class="field-label">Objetivo (binario)</label>
-          <input class="mono-input" id="g-target" maxlength="16" value="1111" oninput="validateTarget()">
-          <div class="hint" id="g-target-hint" style="color:var(--green)">✓ válido</div>
+        <div class="scat">FRONTEND / MOBILE</div>
+        <div class="tags">
+          <span class="stag">Flutter</span><span class="stag">Next.js 14</span><span class="stag">React</span><span class="stag">Tailwind CSS</span><span class="stag">Three.js</span>
         </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="g-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-            <option value="4096">4096</option>
-          </select>
+        <div class="scat">BACKEND & INFRA</div>
+        <div class="tags" style="margin-bottom:0">
+          <span class="stag">FastAPI</span><span class="stag">PostgreSQL</span><span class="stag">DuckDB</span><span class="stag">Docker</span><span class="stag">Vercel</span><span class="stag">Render</span>
         </div>
       </div>
-
-      <!-- Meta KPIs -->
-      <div class="meta-row">
-        <div class="meta-kpi"><span class="meta-val" id="g-N">16</span><span class="meta-lbl">estados</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-iters">3</span><span class="meta-lbl">iteraciones</span></div>
-        <div class="meta-kpi"><span class="meta-val" id="g-classic">16</span><span class="meta-lbl">peor caso clásico</span></div>
-        <div class="meta-kpi"><span class="meta-val accent" id="g-speedup">5×</span><span class="meta-lbl">aceleración</span></div>
-      </div>
-
-      <!-- Bloch spheres walkthrough -->
-      <div class="walk-panel">
-        <div class="walk-header">
-          <span class="walk-title" id="g-walk-label">Estado inicial</span>
-          <span class="walk-step" id="g-walk-step">1/5</span>
-        </div>
-        <p class="walk-desc" id="g-walk-desc">Todos los qubits comienzan en |0⟩.</p>
-        <div class="bloch-row">
-          <div class="bloch-wrap">
-            <canvas id="g-bloch0" width="140" height="140"></canvas>
-            <div class="bloch-lbl">q₀</div>
-          </div>
-          <div class="bloch-wrap">
-            <canvas id="g-bloch1" width="140" height="140"></canvas>
-            <div class="bloch-lbl">q₁</div>
-          </div>
-          <div class="walk-circuit" id="g-circuit-walk"></div>
-        </div>
-        <div class="walk-controls">
-          <button class="walk-btn" id="g-walk-prev" onclick="groverWalkStep(-1)" disabled>← Anterior</button>
-          <div class="step-dots" id="g-walk-dots"></div>
-          <button class="walk-btn" id="g-walk-next" onclick="groverWalkStep(1)">Siguiente →</button>
-        </div>
-      </div>
-
-      <button class="run-btn" id="g-run-btn" onclick="runGrover()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
-
-      <!-- Results -->
-      <div id="g-results" style="display:none">
-        <div class="results-header">
-          <span>Resultados</span>
-          <span class="badge-success" id="g-badge"></span>
-        </div>
-        <!-- Iter chart -->
-        <div class="iter-chart-wrap">
-          <div class="col-title">P(objetivo) por iteración Grover</div>
-          <div id="g-iter-chart" style="width:100%"></div>
-        </div>
-        <div class="col-title" style="margin-top:16px">Distribución de mediciones</div>
-        <div id="g-bars"></div>
-        <div class="info-box" id="g-summary"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         GROVER EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-grover-explain">
-      <div class="page-header">
-        <h2>📖 ¿Qué es el Algoritmo de Grover?</h2>
-      </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Un algoritmo cuántico que encuentra un elemento marcado en una lista desordenada de N elementos usando solo √N pasos — contra los N pasos que necesitaría cualquier algoritmo clásico.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Analogía</h3>
-          <p>Imagina que escondes una carta en uno de 1,000,000 sobres. Un humano necesitaría abrir sobre por sobre. Grover "ilumina" todos los sobres a la vez y en 1,000 pasos (√1,000,000) sabe cuál contiene la carta.</p>
-        </div>
-        <div class="explain-block">
-          <h3>¿Cómo funciona?</h3>
-          <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Superposición</strong> — puertas H ponen todos los N estados en paralelo.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">2</div><div><strong>Oráculo</strong> — invierte la fase del estado objetivo sin revelar cuál es.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">3</div><div><strong>Difusión</strong> — amplifica la amplitud del estado marcado y suprime los demás.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#7744cc">4</div><div><strong>Medición</strong> — el objetivo aparece con probabilidad cercana al 100%.</div></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Las matemáticas</h3>
-          <div class="math-box">
-            <div class="math-line">Iteraciones óptimas: <code>k = ⌊ π/4 · √N ⌋</code></div>
-            <div class="math-line">Probabilidad de éxito: <code>P ≈ sin²( (2k+1) · arcsin(1/√N) )</code></div>
-            <div class="math-line">Aceleración: <code>speedup = N / k ≈ √N</code></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Resultados reales del proyecto</h3>
-          <table class="results-table">
-            <thead><tr><th>Configuración</th><th>Objetivo</th><th>Shots</th><th>Encontrado</th></tr></thead>
-            <tbody>
-              <tr><td>2 qubits</td><td><code>|11⟩</code></td><td>1024</td><td class="green-text">1024/1024 (100%)</td></tr>
-              <tr><td>4 qubits</td><td><code>|1111⟩</code></td><td>1024</td><td class="green-text">980/1024 (96%)</td></tr>
-              <tr><td>16 qubits</td><td><code>|1111…⟩</code></td><td>1024</td><td class="green-text">~96% (201 iters)</td></tr>
-            </tbody>
-          </table>
+      <div>
+        <div class="scat">PROFICIENCY</div>
+        <div class="profs">
+          <div class="prow"><div class="plbl">AI / LLM integration</div><div class="pbar"><div class="pfill" data-w="95"></div></div><div class="ppct">95%</div></div>
+          <div class="prow"><div class="plbl">Python / ML</div><div class="pbar"><div class="pfill" data-w="92"></div></div><div class="ppct">92%</div></div>
+          <div class="prow"><div class="plbl">Flutter / Mobile</div><div class="pbar"><div class="pfill" data-w="88"></div></div><div class="ppct">88%</div></div>
+          <div class="prow"><div class="plbl">Full-Stack delivery</div><div class="pbar"><div class="pfill" data-w="87"></div></div><div class="ppct">87%</div></div>
+          <div class="prow"><div class="plbl">Databases & APIs</div><div class="pbar"><div class="pfill" data-w="85"></div></div><div class="ppct">85%</div></div>
+          <div class="prow"><div class="plbl">DevOps / Deploy</div><div class="pbar"><div class="pfill" data-w="78"></div></div><div class="ppct">78%</div></div>
         </div>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- ══════════════════════════════════════
-         TELEPORT LAB
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-teleport-lab">
-      <div class="page-header">
-        <h2>🔗 Teleportación Cuántica — Laboratorio</h2>
-        <p class="page-sub">3 qubits · par Bell entrelazado · 2 bits clásicos</p>
+<!-- PROJECTS -->
+<section id="projects">
+  <div class="neb neb-a"></div>
+  <div class="wrap">
+    <div class="slabel r">PROJECTS</div>
+    <div class="stitle r d1">Projects <em>that I've built</em></div>
+  </div>
+  <div style="max-width:1080px;margin:0 auto;padding:0 52px">
+    <div class="proj-list r d2">
+
+      <div class="prow">
+        <div class="pnum">001</div>
+        <div>
+          <div class="pname">ASTRA — Multimodal AI assistant</div>
+          <div class="pdesc">Flutter + FastAPI. Text, voice, image — LLM responses, tool execution, persistent memory, Spotify / weather / maps. Whisper voice, wake-word, file ingestion, encrypted storage.</div>
+          <div class="ptags"><span class="tag">Flutter</span><span class="tag">FastAPI</span><span class="tag">Groq / LLM</span><span class="tag">Whisper</span><span class="tag">HTTP/SSE</span></div>
+        </div>
+        <div class="pmeta"><div class="pstatus">AI · MOBILE</div><a href="https://github.com/C0z1/Astra" class="plink" target="_blank">github →</a></div>
       </div>
 
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Estado inicial del mensaje (q₀)</label>
-          <select id="t-state" class="select-input" onchange="onTStateChange()">
-            <option value="plus">|+⟩ — superposición 50/50</option>
-            <option value="minus">|−⟩ — superposición (fase opuesta)</option>
-            <option value="0">|0⟩ — completamente cero</option>
-            <option value="1">|1⟩ — completamente uno</option>
-            <option value="custom">Personalizado (ángulo θ)</option>
-          </select>
+      <div class="prow">
+        <div class="pnum">002</div>
+        <div>
+          <div class="pname">SteamSense — Buy or Wait?</div>
+          <div class="pdesc">ML product analyzing years of Steam price history to predict whether to buy now or wait. Full web UI + API + Steam OpenID auth + scikit-learn pipeline deployed end-to-end.</div>
+          <div class="ptags"><span class="tag">Next.js 14</span><span class="tag">TypeScript</span><span class="tag">FastAPI</span><span class="tag">scikit-learn</span><span class="tag">DuckDB</span></div>
         </div>
-        <div class="card" id="t-custom-card" style="display:none">
-          <label class="field-label">θ — 0°=|0⟩ · 90°=ecuador · 180°=|1⟩</label>
-          <div class="slider-row">
-            <input type="range" id="t-theta" min="0" max="180" value="90"
-              oninput="document.getElementById('t-theta-val').textContent=this.value+'°'">
-            <span class="slider-val" id="t-theta-val">90°</span>
-          </div>
-        </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="t-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-          </select>
-        </div>
+        <div class="pmeta"><div class="pstatus">ML · FULL STACK</div><a href="https://github.com/C0z1/STEAMSENSEPRESENTACION" class="plink" target="_blank">github →</a></div>
       </div>
 
-      <!-- Bloch walkthrough 3 qubits -->
-      <div class="walk-panel">
-        <div class="walk-header">
-          <span class="walk-title" id="t-walk-label">Mensaje preparado</span>
-          <span class="walk-step" id="t-walk-step">1/5</span>
+      <div class="prow">
+        <div class="pnum">003</div>
+        <div>
+          <div class="pname">Liz — Local conversational AI</div>
+          <div class="pdesc">Fully local Python AI on a fine-tuned LLaMA 3.0 model — learns from user interaction, integrated directly into Discord as a bot.</div>
+          <div class="ptags"><span class="tag">Python</span><span class="tag">LLaMA 3.0</span><span class="tag">Fine-tuning</span><span class="tag">Discord Bot</span></div>
         </div>
-        <p class="walk-desc" id="t-walk-desc">q₀ en estado |+⟩.</p>
-        <div class="bloch-row">
-          <div class="bloch-wrap">
-            <canvas id="t-bloch0" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#44cc88">q₀ msg</div>
-          </div>
-          <div class="bloch-wrap">
-            <canvas id="t-bloch1" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#4488ff">q₁ Alice</div>
-          </div>
-          <div class="bloch-wrap">
-            <canvas id="t-bloch2" width="120" height="120"></canvas>
-            <div class="bloch-lbl" style="color:#ff8844">q₂ Bob</div>
-          </div>
-          <div class="walk-circuit" id="t-circuit-walk" style="flex:1;min-width:200px"></div>
-        </div>
-        <div class="walk-controls">
-          <button class="walk-btn" id="t-walk-prev" onclick="teleWalkStep(-1)" disabled>← Anterior</button>
-          <div class="step-dots" id="t-walk-dots"></div>
-          <button class="walk-btn" id="t-walk-next" onclick="teleWalkStep(1)">Siguiente →</button>
-        </div>
+        <div class="pmeta"><div class="pstatus">LOCAL AI</div><a href="#" class="plink">github →</a></div>
       </div>
 
-      <button class="run-btn" id="t-run-btn" onclick="runTeleport()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
-
-      <div id="t-results" style="display:none">
-        <div class="results-header"><span>Resultados</span></div>
-        <div class="two-col">
-          <div>
-            <div class="col-title">Mediciones brutas (q₂ q₁ q₀)</div>
-            <div id="t-raw-bars"></div>
-          </div>
-          <div>
-            <div class="col-title">Bob después de corrección X+Z</div>
-            <div id="t-bob-bars"></div>
-          </div>
+      <div class="prow">
+        <div class="pnum">004</div>
+        <div>
+          <div class="pname">EchoBuzz — Discord bot</div>
+          <div class="pdesc">Discord bot bridging Spotify and Rayo APIs — playback control, info queries and profile lookups directly from a server.</div>
+          <div class="ptags"><span class="tag">Discord Bot</span><span class="tag">Spotify API</span><span class="tag">Rayo API</span></div>
         </div>
-        <div class="info-box" id="t-summary"></div>
-        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
-        <div id="t-circuit-result"></div>
+        <div class="pmeta"><div class="pstatus">DISCORD · APIs</div><a href="https://github.com/C0z1/echobuzz" class="plink" target="_blank">github →</a></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="rule"></div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="neb neb-a"></div>
+  <div class="wrap">
+    <div class="slabel r">CONTACT</div>
+    <div class="stitle r d1">Open a <em>channel</em></div>
+    <div class="con-grid r d2">
+      <div class="con-text">
+        <p>Looking for someone who ships AI systems end to end — reach out.</p>
+        <p>Available for full-time roles, internships and freelance projects in AI / full-stack / ML.</p>
+        <div class="con-links">
+          <a href="mailto:felixyael81@gmail.com" class="clink">felixyael81@gmail.com <span class="carr">→</span></a>
+          <a href="https://github.com/C0z1" target="_blank" class="clink">github.com/C0z1 <span class="carr">→</span></a>
+          <a href="#" class="clink">Download CV <span class="carr">→</span></a>
+        </div>
+      </div>
+      <div class="con-card">
+        <div class="con-clabel">DIRECT CHANNEL</div>
+        <div class="con-email">felixyael81@gmail.com</div>
+        <div class="con-sub">Full-time · internships · freelance — AI / full-stack / ML.</div>
+        <button class="btn-p" onclick="window.location.href='mailto:felixyael81@gmail.com'">SEND MESSAGE →</button>
       </div>
     </div>
+  </div>
+</section>
 
-    <!-- ══════════════════════════════════════
-         TELEPORT EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-teleport-explain">
-      <div class="page-header">
-        <h2>📖 ¿Qué es la Teleportación Cuántica?</h2>
-      </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Transferir el estado exacto de un qubit de un lugar a otro sin moverlo físicamente. El qubit original es <strong>DESTRUIDO</strong> en el proceso. Solo la información viaja.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Analogía</h3>
-          <p>Imagina enviar una escultura LEGO a un amigo: (1) la desarmas, (2) anotas cómo era cada pieza, (3) envías esas instrucciones (2 bits clásicos), (4) tu amigo la reconstruye perfectamente. El original desaparece — pero el resultado es idéntico.</p>
-        </div>
-        <div class="explain-block">
-          <h3>Los 3 qubits</h3>
-          <div class="qubit-table">
-            <div class="qubit-row"><div class="qubit-badge" style="background:#44cc88">q₀</div><div><strong>Mensaje</strong> — el estado a teleportar. Destruido al medirlo.</div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#4488ff">q₁</div><div><strong>Alice</strong> — su mitad del par entrelazado. Mide y envía 2 bits a Bob.</div></div>
-            <div class="qubit-row"><div class="qubit-badge" style="background:#ff8844">q₂</div><div><strong>Bob</strong> — recibe los 2 bits, aplica correcciones y obtiene el estado original.</div></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Resultado real del proyecto</h3>
-          <div class="result-callout">
-            <div>Mensaje preparado en |+⟩ → α = β = 1/√2 → 50% cada uno</div>
-            <div>Bob obtuvo: <strong>52% |0⟩ y 48% |1⟩</strong></div>
-            <div class="green-text">✓ Diferencia del 2% = ruido estadístico normal (1024 shots)</div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Concepto clave</h3>
-          <p>Ningún qubit viajó físicamente. El protocolo NO viola el límite de la velocidad de la luz porque los 2 bits clásicos se transmiten por medios convencionales.</p>
-        </div>
-      </div>
-    </div>
+<footer>
+  <div class="fcopy">© 2025 Felix Yael Tavera Ramírez</div>
+  <div class="fcoord">AI · FULL STACK · ML</div>
+</footer>
 
-    <!-- ══════════════════════════════════════
-         STEANE LAB
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-steane-lab">
-      <div class="page-header">
-        <h2>🛡 Código Steane [7,1,3] — Laboratorio</h2>
-        <p class="page-sub">1 qubit lógico en 7 físicos · 6 ancillas de síndrome</p>
-      </div>
-
-      <div class="card-row">
-        <div class="card">
-          <label class="field-label">Qubit con error (−1 = sin error)</label>
-          <div class="slider-row">
-            <input type="range" id="s-errq" min="-1" max="6" value="3" oninput="updateSteaneLabel()">
-            <span class="slider-val" id="s-errq-val">d[3]</span>
-          </div>
-          <div class="hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X en d[3]</div>
-        </div>
-        <div class="card">
-          <label class="field-label">Shots</label>
-          <select id="s-shots" class="select-input">
-            <option value="512">512</option>
-            <option value="1024" selected>1024</option>
-            <option value="2048">2048</option>
-          </select>
-        </div>
-      </div>
-
-      <!-- Visual qubit grid -->
-      <div class="card" style="margin-bottom:16px">
-        <label class="field-label">Estado de los 7 qubits físicos</label>
-        <div id="s-qubit-grid" class="qgrid"></div>
-      </div>
-
-      <button class="run-btn" id="s-run-btn" onclick="runSteane()">
-        <span class="run-icon">▶</span> Ejecutar simulación
-      </button>
-
-      <div id="s-results" style="display:none">
-        <div class="results-header"><span>Resultados</span></div>
-        <div class="two-col">
-          <div>
-            <div class="col-title">Síndrome medido (6 ancillas)</div>
-            <div id="s-syndrome-display"></div>
-          </div>
-          <div>
-            <div class="col-title">Qubit lógico tras corrección</div>
-            <div id="s-logical-bars"></div>
-          </div>
-        </div>
-        <div class="info-box" id="s-summary"></div>
-        <div class="col-title" style="margin-top:16px">Mapa de síndromes [7,1,3]</div>
-        <div id="s-syndrome-map"></div>
-        <div class="col-title" style="margin-top:16px">Circuito cuántico</div>
-        <div id="s-circuit-display"></div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         STEANE EXPLAIN
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-steane-explain">
-      <div class="page-header">
-        <h2>📖 Corrección de Error Steane [7,1,3]</h2>
-      </div>
-      <div class="explain-body">
-        <div class="explain-block">
-          <h3>¿Qué es?</h3>
-          <p>Una forma de proteger 1 qubit lógico usando 7 qubits físicos. Si CUALQUIER qubit se corrompe por ruido de hardware, el código detecta exactamente cuál es y lo corrige — sin mirar directamente el valor del qubit.</p>
-        </div>
-        <div class="explain-block">
-          <h3>¿Por qué es necesario?</h3>
-          <p>Los qubits reales son frágiles: la radiación de fondo, las vibraciones térmicas y la decoherencia los corrompen constantemente. No puedes copiar un qubit (teorema de no-clonación), así que hay que protegerlo distribuyendo su información.</p>
-        </div>
-        <div class="explain-block">
-          <h3>[7, 1, 3] — ¿qué significan?</h3>
-          <div class="param-table">
-            <div class="param-row"><code class="param-num">7</code><span>qubits físicos usados</span></div>
-            <div class="param-row"><code class="param-num">1</code><span>qubit lógico codificado</span></div>
-            <div class="param-row"><code class="param-num">3</code><span>distancia mínima → corrige ⌊(3−1)/2⌋ = 1 error</span></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Pasos del algoritmo</h3>
-          <div class="steps-list">
-            <div class="step-item"><div class="step-num" style="background:#3366ff">1</div><div><strong>Codificación</strong> — H en d[0..2] + cadena CNOT distribuye |0_L⟩ en 7 qubits.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc2222">2</div><div><strong>Error</strong> — puerta X en d[i] simula ruido de hardware (bit-flip).</div></div>
-            <div class="step-item"><div class="step-num" style="background:#cc8800">3</div><div><strong>Síndrome</strong> — 6 ancillas miden paridad de grupos sin leer los datos.</div></div>
-            <div class="step-item"><div class="step-num" style="background:#119955">4</div><div><strong>Corrección</strong> — el patrón señala el qubit culpable → X lo restaura.</div></div>
-          </div>
-        </div>
-        <div class="explain-block">
-          <h3>Resultado real del proyecto</h3>
-          <div class="result-callout">
-            <div>13 qubits en total (7 datos + 6 ancillas) · 1024 shots</div>
-            <div>Síndrome <code>001110</code> → identifica exactamente d[3]</div>
-            <div class="green-text">✓ Mismo principio en hardware cuántico real de IBM</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         SPEEDUP
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-speedup">
-      <div class="page-header">
-        <h2>📊 Cuántico vs Clásico</h2>
-        <p class="page-sub">Tabla de aceleración del Algoritmo de Grover</p>
-      </div>
-      <div class="speedup-formula">
-        <strong>Fórmula:</strong>
-        <code>iteraciones = ⌊ π/4 · √N ⌋</code> &nbsp;·&nbsp;
-        <code>aceleración = N ÷ iteraciones</code>
-      </div>
-      <div class="table-wrap">
-        <table class="speedup-table">
-          <thead>
-            <tr><th>Algoritmo</th><th>Estados N</th><th>Clásico</th><th>Cuántico</th><th>Aceleración</th></tr>
-          </thead>
-          <tbody id="speedup-tbody"></tbody>
-        </table>
-      </div>
-      <p class="speedup-note">Cada qubit añadido duplica el espacio de búsqueda, pero el algoritmo cuántico solo crece √2 en iteraciones.</p>
-      <div id="speedup-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px">
-        <canvas id="speedup-canvas"></canvas>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         QUIZ
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-quiz">
-      <div class="page-header">
-        <h2>🧠 Quiz Cuántico</h2>
-        <p class="page-sub">Pon a prueba tus conocimientos sobre los tres experimentos</p>
-      </div>
-      <div class="quiz-wrap">
-        <div class="quiz-top">
-          <div class="quiz-progress-row">
-            <div class="step-dots" id="quiz-progress"></div>
-            <span class="walk-step" id="quiz-q-num">1/7</span>
-          </div>
-        </div>
-        <div class="quiz-q" id="quiz-q-text"></div>
-        <div class="quiz-opts" id="quiz-opts"></div>
-        <div class="quiz-explanation" id="quiz-explanation" style="display:none"></div>
-        <button class="run-btn" id="quiz-next-btn" onclick="quizNext()" style="display:none;margin-top:12px">
-          <span class="run-icon">→</span> Siguiente pregunta
-        </button>
-        <div id="quiz-score-wrap"></div>
-        <button class="run-btn" onclick="startQuiz()" style="margin-top:8px">
-          <span class="run-icon">↺</span> Iniciar quiz
-        </button>
-      </div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         HISTORIAL
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-history">
-      <div class="page-header">
-        <h2>🕑 Historial de Experimentos</h2>
-        <p class="page-sub">Tus últimas simulaciones (se guarda en el navegador)</p>
-      </div>
-      <div id="history-list"></div>
-    </div>
-
-    <!-- ══════════════════════════════════════
-         3D
-    ══════════════════════════════════════ -->
-    <div class="page" id="page-visual3d">
-      <div class="page-header">
-        <h2>🌐 Visualización 3D Interactiva</h2>
-        <p class="page-sub">Esferas de Bloch, entrelazamiento y amplitudes animadas</p>
-      </div>
-      <div class="viz3d-frame-wrap">
-        <iframe src="visual3d.html" title="Quantum 3D Visualizer"></iframe>
-      </div>
-    </div>
-
-  </main>
-</div>
-
-<script src="i18n.js"></script>
-<script src="sim.js"></script>
-<script src="ui.js"></script>
 <script>
-  // Boot walkthroughs after DOM ready
-  window.addEventListener('load', () => {
-    // Defer until app is shown
-    const orig = startApp;
-    window.startApp = function(){
-      orig();
-      setTimeout(()=>{ initGroverWalk(); initTeleWalk(); renderSteaneGrid(3); startQuiz(); }, 100);
-    };
+/* GAME-STYLE BLACK HOLE — canvas 2D */
+(function(){
+  const canvas = document.getElementById('bh-canvas');
+  const wrap   = document.getElementById('bh-wrap');
+  if(!canvas || !wrap) return;
+  const ctx = canvas.getContext('2d');
+
+  let W, H, cx, cy, R;
+  function resize(){
+    W = wrap.clientWidth;
+    H = wrap.clientHeight;
+    canvas.width  = W;
+    canvas.height = H;
+    cx = W * 0.5;
+    cy = H * 0.5;
+    R  = Math.min(W, H) * 0.28;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ── Particles in the accretion disk ── */
+  const NPART = 320;
+  const parts = [];
+  for(let i = 0; i < NPART; i++){
+    const band  = 0.5 + Math.random() * 0.85;          // radial band multiplier
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (0.004 + Math.random() * 0.012) * (Math.random()<.5?1:-1);
+    const life  = Math.random();                        // phase offset for shimmer
+    parts.push({ band, angle, speed, life,
+                 size: 0.8 + Math.random() * 2.2,
+                 alpha: 0.3 + Math.random() * 0.7 });
+  }
+
+  /* ── Orbiting energy orbs ── */
+  const NORBS = 6;
+  const orbs = Array.from({length: NORBS}, (_, i) => ({
+    angle : (i / NORBS) * Math.PI * 2,
+    speed : 0.008 + i * 0.003,
+    r     : R * (1.55 + i * 0.12),
+    size  : 3 + Math.random() * 3,
+    hue   : 195 + i * 8,
+  }));
+
+  /* ── Ring definitions ── */
+  const rings = [
+    { r: R * 0.38, w: 1.5, a: 0.9,  speed:  0.012, col: '#7dd3fc' },
+    { r: R * 0.55, w: 1.0, a: 0.6,  speed: -0.008, col: '#38b6ff' },
+    { r: R * 0.72, w: 2.5, a: 0.45, speed:  0.006, col: '#1a8fd1' },
+    { r: R * 0.92, w: 1.5, a: 0.35, speed: -0.004, col: '#0e60a8' },
+    { r: R * 1.18, w: 1.0, a: 0.22, speed:  0.003, col: '#38b6ff' },
+    { r: R * 1.48, w: 0.8, a: 0.12, speed: -0.002, col: '#7dd3fc' },
+  ];
+  const ringAngles = rings.map(() => Math.random() * Math.PI * 2);
+
+  /* ── Hex grid pattern (static, drawn once into offscreen) ── */
+  let hexOff;
+  function buildHexOffscreen(){
+    hexOff = document.createElement('canvas');
+    hexOff.width  = W; hexOff.height = H;
+    const hx = hexOff.getContext('2d');
+    const step = 28, h3 = step * Math.sqrt(3) / 2;
+    hx.strokeStyle = '#38b6ff0a';
+    hx.lineWidth   = 0.5;
+    for(let row = -1; row < H/h3 + 2; row++){
+      for(let col = -1; col < W/step * 1.5 + 2; col++){
+        const x = col * step * 1.5;
+        const y = row * h3 * 2 + (col%2 ? h3 : 0);
+        hx.beginPath();
+        for(let s=0;s<6;s++){
+          const a = (s/6)*Math.PI*2 - Math.PI/6;
+          s===0 ? hx.moveTo(x+step*Math.cos(a), y+step*Math.sin(a))
+                : hx.lineTo(x+step*Math.cos(a), y+step*Math.sin(a));
+        }
+        hx.closePath(); hx.stroke();
+      }
+    }
+  }
+  buildHexOffscreen();
+  window.addEventListener('resize',()=>{ resize(); buildHexOffscreen(); });
+
+  /* ── Scanline overlay (subtle) ── */
+  function drawScanlines(){
+    for(let y=0; y<H; y+=4){
+      ctx.fillStyle = 'rgba(0,0,0,0.06)';
+      ctx.fillRect(0, y, W, 1);
+    }
+  }
+
+  /* ── Glow helper ── */
+  function glow(blur, color){
+    ctx.shadowBlur  = blur;
+    ctx.shadowColor = color;
+  }
+  function noGlow(){ ctx.shadowBlur = 0; }
+
+  let t = 0;
+
+  function frame(){
+    t += 0.016;
+    ctx.clearRect(0, 0, W, H);
+
+    /* hex grid */
+    ctx.drawImage(hexOff, 0, 0);
+
+    /* ── Outer diffuse glow halo ── */
+    const halo = ctx.createRadialGradient(cx,cy, R*1.0, cx,cy, R*2.2);
+    halo.addColorStop(0,   'rgba(56,182,255,0.07)');
+    halo.addColorStop(0.4, 'rgba(29,128,210,0.04)');
+    halo.addColorStop(1,   'rgba(0,0,0,0)');
+    ctx.fillStyle = halo;
+    ctx.beginPath(); ctx.arc(cx,cy,R*2.2,0,Math.PI*2); ctx.fill();
+
+    /* ── Accretion disk gradient (flat ellipse) ── */
+    const diskGrad = ctx.createRadialGradient(cx,cy,R*0.35, cx,cy,R*1.45);
+    diskGrad.addColorStop(0,    'rgba(0,0,0,0)');
+    diskGrad.addColorStop(0.38, 'rgba(56,182,255,0.18)');
+    diskGrad.addColorStop(0.55, 'rgba(125,211,252,0.28)');
+    diskGrad.addColorStop(0.72, 'rgba(56,182,255,0.15)');
+    diskGrad.addColorStop(0.9,  'rgba(14,96,168,0.06)');
+    diskGrad.addColorStop(1,    'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.scale(1, 0.38);                 // flatten to look like a tilted disk
+    ctx.fillStyle = diskGrad;
+    ctx.beginPath(); ctx.arc(cx, cy/0.38, R*1.45, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    /* ── Particles ── */
+    parts.forEach(p => {
+      p.angle += p.speed;
+      p.life  += 0.008;
+      const shimmer = 0.5 + 0.5*Math.sin(p.life * 4.2);
+      const pr = R * p.band;
+      const px = cx + Math.cos(p.angle) * pr;
+      const py = cy + Math.sin(p.angle) * pr * 0.35;  // flatten Y for disk look
+      const alpha = p.alpha * shimmer;
+      glow(8, '#38b6ff');
+      ctx.fillStyle = `rgba(125,211,252,${alpha})`;
+      ctx.beginPath();
+      ctx.arc(px, py, p.size * shimmer, 0, Math.PI*2);
+      ctx.fill();
+    });
+    noGlow();
+
+    /* ── Rotating rings ── */
+    rings.forEach((ring, i) => {
+      ringAngles[i] += ring.speed;
+      const pulse = 1 + 0.04 * Math.sin(t * 3 + i);
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ringAngles[i]);
+      ctx.scale(1, 0.35 + i * 0.03);   // different tilt per ring
+      glow(18, ring.col);
+      ctx.strokeStyle = ring.col;
+      ctx.globalAlpha = ring.a * (0.85 + 0.15*Math.sin(t*1.5+i));
+      ctx.lineWidth   = ring.w;
+
+      /* dashed segments for game look */
+      const segs = 3 + i;
+      const gap  = (Math.PI * 2 / segs);
+      for(let s=0; s<segs; s++){
+        const start = s * gap + ringAngles[i] * 0.3;
+        ctx.beginPath();
+        ctx.arc(0, 0, ring.r * pulse, start, start + gap * 0.72);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+      noGlow();
+    });
+
+    /* ── Singularity core ── */
+    // Void black
+    ctx.beginPath();
+    ctx.arc(cx, cy, R*0.32, 0, Math.PI*2);
+    const coreGrad = ctx.createRadialGradient(cx,cy,0, cx,cy,R*0.32);
+    coreGrad.addColorStop(0,   '#000000');
+    coreGrad.addColorStop(0.7, '#020810');
+    coreGrad.addColorStop(1,   '#061628');
+    ctx.fillStyle = coreGrad;
+    ctx.fill();
+
+    // Inner ring pulse
+    const pulseR = R*0.32 + 2*Math.sin(t*5);
+    glow(22, '#38b6ff');
+    ctx.strokeStyle = `rgba(56,182,255,${0.6+0.4*Math.sin(t*5)})`;
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,pulseR,0,Math.PI*2); ctx.stroke();
+    noGlow();
+
+    // Spinning inner cross/grid lines inside core
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(t * 0.8);
+    ctx.strokeStyle = 'rgba(56,182,255,0.15)';
+    ctx.lineWidth = 0.8;
+    for(let a=0; a<4; a++){
+      const ang = (a/4)*Math.PI*2;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(Math.cos(ang)*R*0.3, Math.sin(ang)*R*0.3);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    /* ── Orbiting energy orbs ── */
+    orbs.forEach((orb, i) => {
+      orb.angle += orb.speed;
+      const ox = cx + Math.cos(orb.angle) * orb.r;
+      const oy = cy + Math.sin(orb.angle) * orb.r * 0.32;
+      // trail
+      for(let tr=1; tr<=6; tr++){
+        const ta = orb.angle - orb.speed * tr * 3;
+        const tx = cx + Math.cos(ta) * orb.r;
+        const ty = cy + Math.sin(ta) * orb.r * 0.32;
+        ctx.globalAlpha = (1 - tr/7) * 0.35;
+        ctx.fillStyle = `hsl(${orb.hue},100%,70%)`;
+        ctx.beginPath(); ctx.arc(tx, ty, orb.size * 0.5, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+      glow(16, `hsl(${orb.hue},100%,70%)`);
+      ctx.fillStyle = `hsl(${orb.hue},100%,85%)`;
+      ctx.beginPath(); ctx.arc(ox, oy, orb.size, 0, Math.PI*2); ctx.fill();
+      noGlow();
+    });
+
+    /* scanlines on top */
+    drawScanlines();
+
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* TYPEWRITER */
+(function(){
+  const el=document.getElementById('hrole');if(!el)return;
+  const ph=['AI Product Engineer','Full-Stack Developer','ML Systems Builder','LLM Integration Specialist'];
+  let pi=0,ci=0,del=false;
+  function tick(){const p=ph[pi];
+    if(!del){el.innerHTML=p.slice(0,ci+1)+'<span class="tcur"></span>';ci++;if(ci>=p.length){del=true;setTimeout(tick,1800);return;}}
+    else{el.innerHTML=p.slice(0,ci)+'<span class="tcur"></span>';ci--;if(ci<0){del=false;pi=(pi+1)%ph.length;ci=0;setTimeout(tick,400);return;}}
+    setTimeout(tick,del?60:90);
+  }tick();
+})();
+
+
+
+/* REVEAL */
+(function(){
+  const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');obs.unobserve(e.target);}});},{threshold:.12});
+  document.querySelectorAll('.r').forEach(el=>obs.observe(el));
+})();
+
+/* BARS */
+(function(){
+  const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('[data-w]').forEach(b=>b.style.width=b.getAttribute('data-w')+'%');obs.unobserve(e.target);}});},{threshold:.2});
+  document.querySelectorAll('.profs,.depth').forEach(el=>obs.observe(el));
+})();
+
+/* BURGER */
+(function(){
+  const btn=document.getElementById('burger'),nav=document.getElementById('mnav');
+  if(!btn||!nav)return;
+  btn.addEventListener('click',()=>nav.classList.toggle('open'));
+  nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>nav.classList.remove('open')));
+})();
+
+/* BACK TOP */
+(function(){
+  const btn=document.getElementById('btop');if(!btn)return;
+  window.addEventListener('scroll',()=>btn.classList.toggle('vis',scrollY>400));
+  btn.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+})();
+
+/* NAV ACTIVE */
+(function(){
+  const links=document.querySelectorAll('.nav-links a');
+  const ids=['whoami','skills','experience','ai','projects','stack','contact'];
+  window.addEventListener('scroll',()=>{
+    let cur='';ids.forEach(id=>{const el=document.getElementById(id);if(el&&scrollY>=el.offsetTop-80)cur=id;});
+    links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+cur));
   });
+})();
 </script>
 </body>
 </html>
