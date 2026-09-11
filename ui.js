@@ -448,3 +448,103 @@ function showQuizScore(){
     <button class="run-btn" onclick="startQuiz()" style="margin-top:16px"><span class="run-icon">↺</span> Repetir</button>`;
   document.getElementById('quiz-progress').innerHTML=QUIZ.map(()=>`<div class="qpill done"></div>`).join('');
 }
+
+// ── Save results for export & audio hooks ─────────────────────────
+const _origRunGrover = runGrover;
+// Patch runGrover to save result
+async function runGrover(){
+  const n=parseInt(document.getElementById('g-qubits').value);
+  const target=document.getElementById('g-target').value;
+  const shots=parseInt(document.getElementById('g-shots').value);
+  const btn=document.getElementById('g-run-btn');
+  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
+
+  for(let i=0;i<GROVER_STEPS.length;i++){
+    gWalkStep=i;updateGroverWalkUI();
+    if(audioOn){
+      if(i===1) QAudio.superposition();
+      else if(i===2) QAudio.oracle();
+      else if(i===3) QAudio.diffuse();
+    }
+    await sleep(480);
+  }
+  await sleep(180);
+  const r=simGroverFull(n,target,shots);
+  lastGroverResult=r;
+
+  document.getElementById('g-results').style.display='block';
+  renderBars('g-bars',r.counts,target,'#f5c542','#1a2450');
+  document.getElementById('g-badge').textContent=`|${target}⟩ — ${r.targetProb}%`;
+  document.getElementById('g-summary').innerHTML=
+    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters>1?'s':''} vs ${r.N.toLocaleString()} clásico → <strong style="color:var(--green)">${r.speedup}× speedup</strong>`;
+  document.getElementById('g-iter-wrap').style.display='block';
+  renderIterChart('g-iter-chart',r.snapshots,target,r.iters);
+
+  if(audioOn) QAudio.success();
+  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
+  document.getElementById('g-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function runTeleport(){
+  const state=document.getElementById('t-state').value;
+  const theta=parseFloat(document.getElementById('t-theta')?.value||90);
+  const shots=parseInt(document.getElementById('t-shots').value);
+  const btn=document.getElementById('t-run-btn');
+  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
+  for(let i=0;i<TELE_STEPS.length;i++){
+    tWalkStep=i;updateTeleWalkUI();
+    if(audioOn&&i===1) QAudio.teleport();
+    if(audioOn&&i===3) QAudio.error();
+    await sleep(480);
+  }
+  const r=simTeleport(state,theta,shots);
+  lastTeleResult={...r,shots};
+  document.getElementById('t-results').style.display='block';
+  renderBars('t-raw-bars',r.rawCounts,null,'#6875c8','#1a2050');
+  renderBars('t-bob-bars',r.bobCorrected,r.p0>=r.p1?'0':'1','#36e8a0','#0d2a1a');
+  const b0=(r.bobCorrected['0']/shots*100).toFixed(1),b1=(r.bobCorrected['1']/shots*100).toFixed(1);
+  document.getElementById('t-summary').innerHTML=
+    `Mensaje <strong>${r.stateLabel}</strong> → Bob: <strong>${b0}%|0⟩, ${b1}%|1⟩</strong> · Original destruido · Solo 2 bits clásicos viajaron.`;
+  if(audioOn) QAudio.success();
+  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
+  document.getElementById('t-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function runSteane(){
+  const eq=parseInt(document.getElementById('s-errq').value);
+  const shots=parseInt(document.getElementById('s-shots').value);
+  const btn=document.getElementById('s-run-btn');
+  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
+  for(let i=0;i<6;i++){
+    await sleep(130);
+    const a=document.getElementById('anc-'+i);if(a)a.classList.add('active');
+  }
+  await sleep(350);
+  const r=simSteane(eq,shots);
+  lastSteaneResult=r;
+  const top=Object.entries(r.syndromeCounts).sort((a,b)=>b[1]-a[1])[0];
+  const bits=top[0].split('');
+  if(audioOn) QAudio.syndrome(bits);
+  for(let i=0;i<6;i++){
+    const a=document.getElementById('anc-'+i);
+    if(a){a.classList.remove('active');if(bits[i]==='1')a.classList.add('active');}
+  }
+  if(eq>=0){ await sleep(280); const el=document.getElementById('sq-'+eq); if(el)el.className='sq corrected'; }
+  document.getElementById('s-results').style.display='block';
+  document.getElementById('s-syn-bits').innerHTML=bits.map((b,i)=>`<div class="syn-bit ${b==='1'?'on':'off'}">${b}</div>`).join('');
+  document.getElementById('s-syn-label').innerHTML=
+    `<strong style="color:${top[0]==='000000'?'var(--green)':'var(--amber)'}">${top[0]}</strong> — ${syndromeDesc(top[0])} · ${top[1].toLocaleString()} shots`;
+  renderBars('s-logical-bars',r.logicalResult,'0','#36e8a0','#0d2a1a');
+  document.getElementById('s-summary').innerHTML=eq===-1
+    ?'✓ Sin error. Síndrome <code>000000</code>. Qubit lógico |0_L⟩ intacto.'
+    :`Error <strong>d[${eq}]</strong> → síndrome <code>${r.syndrome}</code> → X correction → |0_L⟩ <strong style="color:var(--green)">sobrevivió</strong>.`;
+  const sm={0:'001001',1:'010010',2:'011011',3:'001110',4:'010101',5:'011110',6:'001111'};
+  document.getElementById('s-syn-map').innerHTML=Object.entries(sm).map(([q,syn])=>
+    `<div style="background:var(--s2);border:1px solid ${parseInt(q)===eq?'var(--amber)':'var(--border)'};border-radius:7px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+      <span style="color:var(--dim)">d[${q}]</span>
+      <code style="font-family:var(--mono);color:${parseInt(q)===eq?'var(--amber)':'var(--dim)'}">${syn}</code>
+    </div>`).join('');
+  if(audioOn) QAudio.success();
+  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
+  document.getElementById('s-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
