@@ -449,167 +449,165 @@ function showQuizScore(){
   document.getElementById('quiz-progress').innerHTML=QUIZ.map(()=>`<div class="qpill done"></div>`).join('');
 }
 
-// ── Save results for export & audio hooks ─────────────────────────
-const _origRunGrover = runGrover;
-// Patch runGrover to save result
-async function runGrover(){
-  const n=parseInt(document.getElementById('g-qubits').value);
-  const target=document.getElementById('g-target').value;
-  const shots=parseInt(document.getElementById('g-shots').value);
-  const btn=document.getElementById('g-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
 
-  for(let i=0;i<GROVER_STEPS.length;i++){
-    gWalkStep=i;updateGroverWalkUI();
-    if(audioOn){
-      if(i===1) QAudio.superposition();
-      else if(i===2) QAudio.oracle();
-      else if(i===3) QAudio.diffuse();
-    }
-    await sleep(480);
+// ── Keyboard shortcuts ────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (['INPUT','TEXTAREA','SELECT'].includes(e.target.tagName)) return;
+  const k = e.key;
+  if (k==='1') scrollToSection('grover');
+  else if (k==='2') scrollToSection('teleport');
+  else if (k==='3') scrollToSection('steane');
+  else if (k==='4') scrollToSection('stats');
+  else if (k==='5') scrollToSection('quiz');
+  else if (k==='g'||k==='G') runGrover();
+  else if (k==='t'||k==='T') runTeleport();
+  else if (k==='s'||k==='S') runSteane();
+  else if (k==='m'||k==='M') toggleAudio();
+  else if (k==='r'||k==='R') openRace?.();
+  else if (k==='i'||k==='I') openStats?.();
+  else if (k==='c'||k==='C') openComparator?.();
+  else if (k==='p'||k==='P') togglePresentation?.();
+  else if (k==='ArrowRight') { groverWalkStep(1); teleWalkStep(1); }
+  else if (k==='ArrowLeft')  { groverWalkStep(-1); teleWalkStep(-1); }
+  else if (k==='Escape') openRace && openRace('close');
+});
+
+// ── Presentation mode ─────────────────────────────────────────────
+let presentationMode = false;
+function togglePresentation() {
+  presentationMode = !presentationMode;
+  document.body.classList.toggle('presentation', presentationMode);
+  showToast(presentationMode ? 'Modo presentación ON' : 'Modo presentación OFF');
+}
+
+// ── Toast ─────────────────────────────────────────────────────────
+function showToast(msg, type='info') {
+  let t = document.getElementById('_toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = '_toast';
+    t.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(0);' +
+      'background:rgba(8,13,30,.95);border:1px solid rgba(80,120,255,.3);border-radius:10px;' +
+      'padding:10px 20px;font-size:13px;color:#d0d8ff;z-index:9999;pointer-events:none;' +
+      'transition:opacity .3s;backdrop-filter:blur(12px)';
+    document.body.appendChild(t);
   }
-  await sleep(180);
-  const r=simGroverFull(n,target,shots);
-  lastGroverResult=r;
-
-  document.getElementById('g-results').style.display='block';
-  renderBars('g-bars',r.counts,target,'#f5c542','#1a2450');
-  document.getElementById('g-badge').textContent=`|${target}⟩ — ${r.targetProb}%`;
-  document.getElementById('g-summary').innerHTML=
-    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters>1?'s':''} vs ${r.N.toLocaleString()} clásico → <strong style="color:var(--green)">${r.speedup}× speedup</strong>`;
-  document.getElementById('g-iter-wrap').style.display='block';
-  renderIterChart('g-iter-chart',r.snapshots,target,r.iters);
-
-  if(audioOn) QAudio.success();
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('g-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+  t.textContent = msg;
+  t.style.opacity = '1';
+  if (type === 'error') t.style.borderColor = 'var(--red)';
+  clearTimeout(t._tid);
+  t._tid = setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
-async function runTeleport(){
-  const state=document.getElementById('t-state').value;
-  const theta=parseFloat(document.getElementById('t-theta')?.value||90);
-  const shots=parseInt(document.getElementById('t-shots').value);
-  const btn=document.getElementById('t-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
-  for(let i=0;i<TELE_STEPS.length;i++){
-    tWalkStep=i;updateTeleWalkUI();
-    if(audioOn&&i===1) QAudio.teleport();
-    if(audioOn&&i===3) QAudio.error();
-    await sleep(480);
-  }
-  const r=simTeleport(state,theta,shots);
-  lastTeleResult={...r,shots};
-  document.getElementById('t-results').style.display='block';
-  renderBars('t-raw-bars',r.rawCounts,null,'#6875c8','#1a2050');
-  renderBars('t-bob-bars',r.bobCorrected,r.p0>=r.p1?'0':'1','#36e8a0','#0d2a1a');
-  const b0=(r.bobCorrected['0']/shots*100).toFixed(1),b1=(r.bobCorrected['1']/shots*100).toFixed(1);
-  document.getElementById('t-summary').innerHTML=
-    `Mensaje <strong>${r.stateLabel}</strong> → Bob: <strong>${b0}%|0⟩, ${b1}%|1⟩</strong> · Original destruido · Solo 2 bits clásicos viajaron.`;
-  if(audioOn) QAudio.success();
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('t-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+// ── Audio toggle ──────────────────────────────────────────────────
+let audioOn = false;
+function toggleAudio() {
+  if (!audioOn) { QAudio.init(); audioOn = true; }
+  else audioOn = false;
+  document.getElementById('audio-btn').textContent = audioOn ? '🔊' : '🔇';
+  showToast(audioOn ? 'Sonido activado' : 'Sonido desactivado');
 }
 
-async function runSteane(){
-  const eq=parseInt(document.getElementById('s-errq').value);
-  const shots=parseInt(document.getElementById('s-shots').value);
-  const btn=document.getElementById('s-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
-  for(let i=0;i<6;i++){
-    await sleep(130);
-    const a=document.getElementById('anc-'+i);if(a)a.classList.add('active');
-  }
-  await sleep(350);
-  const r=simSteane(eq,shots);
-  lastSteaneResult=r;
-  const top=Object.entries(r.syndromeCounts).sort((a,b)=>b[1]-a[1])[0];
-  const bits=top[0].split('');
-  if(audioOn) QAudio.syndrome(bits);
-  for(let i=0;i<6;i++){
-    const a=document.getElementById('anc-'+i);
-    if(a){a.classList.remove('active');if(bits[i]==='1')a.classList.add('active');}
-  }
-  if(eq>=0){ await sleep(280); const el=document.getElementById('sq-'+eq); if(el)el.className='sq corrected'; }
-  document.getElementById('s-results').style.display='block';
-  document.getElementById('s-syn-bits').innerHTML=bits.map((b,i)=>`<div class="syn-bit ${b==='1'?'on':'off'}">${b}</div>`).join('');
-  document.getElementById('s-syn-label').innerHTML=
-    `<strong style="color:${top[0]==='000000'?'var(--green)':'var(--amber)'}">${top[0]}</strong> — ${syndromeDesc(top[0])} · ${top[1].toLocaleString()} shots`;
-  renderBars('s-logical-bars',r.logicalResult,'0','#36e8a0','#0d2a1a');
-  document.getElementById('s-summary').innerHTML=eq===-1
-    ?'✓ Sin error. Síndrome <code>000000</code>. Qubit lógico |0_L⟩ intacto.'
-    :`Error <strong>d[${eq}]</strong> → síndrome <code>${r.syndrome}</code> → X correction → |0_L⟩ <strong style="color:var(--green)">sobrevivió</strong>.`;
-  const sm={0:'001001',1:'010010',2:'011011',3:'001110',4:'010101',5:'011110',6:'001111'};
-  document.getElementById('s-syn-map').innerHTML=Object.entries(sm).map(([q,syn])=>
-    `<div style="background:var(--s2);border:1px solid ${parseInt(q)===eq?'var(--amber)':'var(--border)'};border-radius:7px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
-      <span style="color:var(--dim)">d[${q}]</span>
-      <code style="font-family:var(--mono);color:${parseInt(q)===eq?'var(--amber)':'var(--dim)'}">${syn}</code>
-    </div>`).join('');
-  if(audioOn) QAudio.success();
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('s-results').scrollIntoView({behavior:'smooth',block:'nearest'});
+// ── Share ─────────────────────────────────────────────────────────
+function shareResult(text) {
+  if (navigator.share) { navigator.share({ title: 'Quantum Lab', text }).catch(()=>{}); }
+  else { navigator.clipboard?.writeText(text).then(()=>showToast('Copiado al portapapeles')); }
 }
 
-// ── Density matrix sidebar on Bloch step change ───────────────────
-function updateDensityMatrix(theta, phi, col) {
-  const el = document.getElementById('g-density-matrix');
-  if (!el) return;
-  el.innerHTML = densityMatrixSVG(theta, phi, col);
-}
-
-// Patch groverWalkStep to also show density matrix
-const _origUpdateGroverWalkUI = updateGroverWalkUI;
-function updateGroverWalkUI() {
-  _origUpdateGroverWalkUI();
-  const s = GROVER_STEPS[gWalkStep];
-  // Density matrix shown for q0 state
-  const el = document.getElementById('g-density-matrix');
-  if (el) el.innerHTML = densityMatrixSVG(s.theta, s.phi, '#4d7fff');
-}
-
-// Patch teleport walkthrough to show density matrix for q0
-const _origUpdateTeleWalkUI = updateTeleWalkUI;
-function updateTeleWalkUI() {
-  _origUpdateTeleWalkUI();
-  const s = TELE_STEPS[tWalkStep];
-  const el = document.getElementById('t-density-matrix');
-  if (el) el.innerHTML = densityMatrixSVG(s.t0, s.p0, '#44cc88');
-}
-
-// ── Noise-aware Grover run ─────────────────────────────────────────
-const _origRunGroverSimple = runGrover;
+// ── Run functions (consolidated with audio + result saving) ────────
 async function runGrover() {
   const n = parseInt(document.getElementById('g-qubits').value);
   const target = document.getElementById('g-target').value;
   const shots = parseInt(document.getElementById('g-shots').value);
-  const noise = parseFloat(document.getElementById('g-noise')?.value || 0);
   const btn = document.getElementById('g-run-btn');
   btn.disabled = true; btn.classList.add('loading'); btn.querySelector('.run-icon').textContent = '⚛';
 
   for (let i = 0; i < GROVER_STEPS.length; i++) {
     gWalkStep = i; updateGroverWalkUI();
     if (audioOn) {
-      if (i === 1) QAudio.superposition();
-      else if (i === 2) QAudio.oracle();
-      else if (i === 3) QAudio.diffuse();
+      if (i === 1) QAudio.superposition?.();
+      else if (i === 2) QAudio.oracle?.();
+      else if (i === 3) QAudio.diffuse?.();
     }
     await sleep(480);
   }
   await sleep(180);
-  const r = simGroverFull(n, target, shots, noise);
+  const r = simGroverFull(n, target, shots);
   lastGroverResult = r;
 
   document.getElementById('g-results').style.display = 'block';
   renderBars('g-bars', r.counts, target, '#f5c542', '#1a2450');
   document.getElementById('g-badge').textContent = `|${target}⟩ — ${r.targetProb}%`;
-
-  const noiseNote = noise > 0 ? ` · ruido ${(noise*100).toFixed(0)}% (${(parseFloat(r.theoreticalProb)-parseFloat(r.targetProb)).toFixed(1)}% pérd.)` : '';
   document.getElementById('g-summary').innerHTML =
-    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters > 1 ? 's' : ''} · <strong style="color:var(--green)">${r.speedup}× speedup</strong>${noiseNote}`;
-
+    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters > 1 ? 's' : ''} vs ${r.N.toLocaleString()} clásico → <strong style="color:var(--green)">${r.speedup}× speedup</strong>`;
   document.getElementById('g-iter-wrap').style.display = 'block';
   renderIterChart('g-iter-chart', r.snapshots, target, r.iters);
 
-  if (audioOn) QAudio.success();
+  if (audioOn) QAudio.success?.();
   btn.disabled = false; btn.classList.remove('loading'); btn.querySelector('.run-icon').textContent = '▶';
   document.getElementById('g-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function runTeleport() {
+  const state = document.getElementById('t-state').value;
+  const theta = parseFloat(document.getElementById('t-theta')?.value || 90);
+  const shots = parseInt(document.getElementById('t-shots').value);
+  const btn = document.getElementById('t-run-btn');
+  btn.disabled = true; btn.classList.add('loading'); btn.querySelector('.run-icon').textContent = '⚛';
+  for (let i = 0; i < TELE_STEPS.length; i++) {
+    tWalkStep = i; updateTeleWalkUI();
+    if (audioOn && i === 1) QAudio.teleport?.();
+    if (audioOn && i === 3) QAudio.error?.();
+    await sleep(480);
+  }
+  const r = simTeleport(state, theta, shots);
+  lastTeleResult = { ...r, shots };
+  document.getElementById('t-results').style.display = 'block';
+  renderBars('t-raw-bars', r.rawCounts, null, '#6875c8', '#1a2050');
+  renderBars('t-bob-bars', r.bobCorrected, r.p0 >= r.p1 ? '0' : '1', '#36e8a0', '#0d2a1a');
+  const b0 = (r.bobCorrected['0'] / shots * 100).toFixed(1), b1 = (r.bobCorrected['1'] / shots * 100).toFixed(1);
+  document.getElementById('t-summary').innerHTML =
+    `Mensaje <strong>${r.stateLabel}</strong> → Bob: <strong>${b0}%|0⟩, ${b1}%|1⟩</strong> · Original destruido · Solo 2 bits clásicos viajaron.`;
+  if (audioOn) QAudio.success?.();
+  btn.disabled = false; btn.classList.remove('loading'); btn.querySelector('.run-icon').textContent = '▶';
+  document.getElementById('t-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function runSteane() {
+  const eq = parseInt(document.getElementById('s-errq').value);
+  const shots = parseInt(document.getElementById('s-shots').value);
+  const btn = document.getElementById('s-run-btn');
+  btn.disabled = true; btn.classList.add('loading'); btn.querySelector('.run-icon').textContent = '⚛';
+  for (let i = 0; i < 6; i++) {
+    await sleep(130);
+    const a = document.getElementById('anc-' + i); if (a) a.classList.add('active');
+  }
+  await sleep(350);
+  const r = simSteane(eq, shots);
+  lastSteaneResult = r;
+  const top = Object.entries(r.syndromeCounts).sort((a, b) => b[1] - a[1])[0];
+  const bits = top[0].split('');
+  if (audioOn) QAudio.syndrome?.(bits);
+  for (let i = 0; i < 6; i++) {
+    const a = document.getElementById('anc-' + i);
+    if (a) { a.classList.remove('active'); if (bits[i] === '1') a.classList.add('active'); }
+  }
+  if (eq >= 0) { await sleep(280); const el = document.getElementById('sq-' + eq); if (el) el.className = 'sq corrected'; }
+  document.getElementById('s-results').style.display = 'block';
+  document.getElementById('s-syn-bits').innerHTML = bits.map((b, i) => `<div class="syn-bit ${b === '1' ? 'on' : 'off'}">${b}</div>`).join('');
+  document.getElementById('s-syn-label').innerHTML =
+    `<strong style="color:${top[0] === '000000' ? 'var(--green)' : 'var(--amber)'}">${top[0]}</strong> — ${syndromeDesc(top[0])} · ${top[1].toLocaleString()} shots`;
+  renderBars('s-logical-bars', r.logicalResult, '0', '#36e8a0', '#0d2a1a');
+  document.getElementById('s-summary').innerHTML = eq === -1
+    ? '✓ Sin error. Síndrome <code>000000</code>. Qubit lógico |0_L⟩ intacto.'
+    : `Error <strong>d[${eq}]</strong> → síndrome <code>${r.syndrome}</code> → X correction → |0_L⟩ <strong style="color:var(--green)">sobrevivió</strong>.`;
+  const sm = { 0: '001001', 1: '010010', 2: '011011', 3: '001110', 4: '010101', 5: '011110', 6: '001111' };
+  document.getElementById('s-syn-map').innerHTML = Object.entries(sm).map(([q, syn]) =>
+    `<div style="background:var(--s2);border:1px solid ${parseInt(q) === eq ? 'var(--amber)' : 'var(--border)'};border-radius:7px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
+      <span style="color:var(--dim)">d[${q}]</span>
+      <code style="font-family:var(--mono);color:${parseInt(q) === eq ? 'var(--amber)' : 'var(--dim)'}">${syn}</code>
+    </div>`).join('');
+  if (audioOn) QAudio.success?.();
+  btn.disabled = false; btn.classList.remove('loading'); btn.querySelector('.run-icon').textContent = '▶';
+  document.getElementById('s-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
