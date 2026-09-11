@@ -131,3 +131,12 @@ function getCurrentSection() {
 function scrollToSection(id) {
   document.getElementById('sec-' + id)?.scrollIntoView({ behavior: 'smooth' });
 }
+
+// Additional keyboard shortcuts
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+  if (e.key === 'r') openRace?.();
+  if (e.key === 'i') openStats?.();
+  if (e.key === 'c') openComparator?.();
+  if (e.key === 'p') togglePresentation?.();
+});

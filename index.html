@@ -321,6 +321,8 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
     <button class="nav-action-btn" id="audio-btn" title="Activar sonido (M)" onclick="toggleAudio()">🔇</button>
     <button class="nav-action-btn" title="Comparar experimentos" onclick="openComparator()">⚖ Comparar</button>
     <button class="nav-action-btn" title="Modo presentación (P)" onclick="togglePresentation()">🎬</button>
+    <button class="nav-action-btn" onclick="openRace()">🏁 Carrera</button>
+    <button class="nav-action-btn" onclick="openStats()">📈 Stats</button>
     <button class="nav-action-btn" id="theme-btn" title="Cambiar tema" onclick="toggleTheme()">☀</button>
     <button class="nav-action-btn" id="nav-lang" onclick="toggleLang()">🇺🇸 EN</button>
   </div>
@@ -340,6 +342,7 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
   <div class="sc-row"><kbd>1-5</kbd> navegar secciones</div>
   <div class="sc-row"><kbd>g</kbd> ejecutar Grover · <kbd>t</kbd> teleport · <kbd>s</kbd> steane</div>
   <div class="sc-row"><kbd>m</kbd> sonido · <kbd>←→</kbd> moverse · <kbd>ESC</kbd> salir</div>
+  <div class="sc-row"><kbd>r</kbd> carrera · <kbd>i</kbd> stats · <kbd>c</kbd> comparar · <kbd>p</kbd> presentación</div>
 </div>
 
 <!-- JOURNEY -->
@@ -665,6 +668,8 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
 <script src="export.js"></script>
 <script src="compare.js"></script>
 <script src="i18n.js"></script>
+<script src="race.js"></script>
+<script src="stats.js"></script>
 <script src="sim.js"></script>
 <script src="ui.js"></script>
 <script>

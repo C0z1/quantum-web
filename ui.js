@@ -548,3 +548,68 @@ async function runSteane(){
   btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
   document.getElementById('s-results').scrollIntoView({behavior:'smooth',block:'nearest'});
 }
+
+// ── Density matrix sidebar on Bloch step change ───────────────────
+function updateDensityMatrix(theta, phi, col) {
+  const el = document.getElementById('g-density-matrix');
+  if (!el) return;
+  el.innerHTML = densityMatrixSVG(theta, phi, col);
+}
+
+// Patch groverWalkStep to also show density matrix
+const _origUpdateGroverWalkUI = updateGroverWalkUI;
+function updateGroverWalkUI() {
+  _origUpdateGroverWalkUI();
+  const s = GROVER_STEPS[gWalkStep];
+  // Density matrix shown for q0 state
+  const el = document.getElementById('g-density-matrix');
+  if (el) el.innerHTML = densityMatrixSVG(s.theta, s.phi, '#4d7fff');
+}
+
+// Patch teleport walkthrough to show density matrix for q0
+const _origUpdateTeleWalkUI = updateTeleWalkUI;
+function updateTeleWalkUI() {
+  _origUpdateTeleWalkUI();
+  const s = TELE_STEPS[tWalkStep];
+  const el = document.getElementById('t-density-matrix');
+  if (el) el.innerHTML = densityMatrixSVG(s.t0, s.p0, '#44cc88');
+}
+
+// ── Noise-aware Grover run ─────────────────────────────────────────
+const _origRunGroverSimple = runGrover;
+async function runGrover() {
+  const n = parseInt(document.getElementById('g-qubits').value);
+  const target = document.getElementById('g-target').value;
+  const shots = parseInt(document.getElementById('g-shots').value);
+  const noise = parseFloat(document.getElementById('g-noise')?.value || 0);
+  const btn = document.getElementById('g-run-btn');
+  btn.disabled = true; btn.classList.add('loading'); btn.querySelector('.run-icon').textContent = '⚛';
+
+  for (let i = 0; i < GROVER_STEPS.length; i++) {
+    gWalkStep = i; updateGroverWalkUI();
+    if (audioOn) {
+      if (i === 1) QAudio.superposition();
+      else if (i === 2) QAudio.oracle();
+      else if (i === 3) QAudio.diffuse();
+    }
+    await sleep(480);
+  }
+  await sleep(180);
+  const r = simGroverFull(n, target, shots, noise);
+  lastGroverResult = r;
+
+  document.getElementById('g-results').style.display = 'block';
+  renderBars('g-bars', r.counts, target, '#f5c542', '#1a2450');
+  document.getElementById('g-badge').textContent = `|${target}⟩ — ${r.targetProb}%`;
+
+  const noiseNote = noise > 0 ? ` · ruido ${(noise*100).toFixed(0)}% (${(parseFloat(r.theoreticalProb)-parseFloat(r.targetProb)).toFixed(1)}% pérd.)` : '';
+  document.getElementById('g-summary').innerHTML =
+    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters > 1 ? 's' : ''} · <strong style="color:var(--green)">${r.speedup}× speedup</strong>${noiseNote}`;
+
+  document.getElementById('g-iter-wrap').style.display = 'block';
+  renderIterChart('g-iter-chart', r.snapshots, target, r.iters);
+
+  if (audioOn) QAudio.success();
+  btn.disabled = false; btn.classList.remove('loading'); btn.querySelector('.run-icon').textContent = '▶';
+  document.getElementById('g-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
