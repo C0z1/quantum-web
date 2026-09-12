@@ -713,9 +713,12 @@ function enterApp(){
     initSteaneGrid();updateSteaneLabel();
     buildSpeedupTable();setTimeout(drawSpeedupChart,80);
     startQuiz();
-    // Fade-in observer
-    const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.12});
-    document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+    // Fade-in observer — double rAF ensures layout is flushed after display:block
+    // before IntersectionObserver checks intersection ratios on the new elements
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.05});
+      document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
+    }));
     // Scroll tracking
     window.addEventListener('scroll',onScroll,{passive:true});
     onScroll();
