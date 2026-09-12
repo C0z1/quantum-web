@@ -713,12 +713,19 @@ function enterApp(){
     initSteaneGrid();updateSteaneLabel();
     buildSpeedupTable();setTimeout(drawSpeedupChart,80);
     startQuiz();
-    // Fade-in observer — double rAF ensures layout is flushed after display:block
-    // before IntersectionObserver checks intersection ratios on the new elements
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      const obs=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible');}),{threshold:.05});
-      document.querySelectorAll('.fade-in').forEach(el=>obs.observe(el));
-    }));
+    // Reveal fade-in elements: immediately mark those in the first section visible
+    // (IntersectionObserver is unreliable on freshly-shown display:none parents),
+    // then use a scroll observer for elements further down the page.
+    const fadeEls = Array.from(document.querySelectorAll('.fade-in'));
+    fadeEls.forEach((el, i) => {
+      setTimeout(() => el.classList.add('visible'), 80 + i * 60);
+    });
+    // Also set up scroll observer so re-entering viewport works for sections below
+    const obs = new IntersectionObserver(
+      es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.05 }
+    );
+    fadeEls.forEach(el => obs.observe(el));
     // Scroll tracking
     window.addEventListener('scroll',onScroll,{passive:true});
     onScroll();
