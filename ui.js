@@ -1,6 +1,6 @@
 // ── UI v3 ─────────────────────────────────────────────────────────
 let lang='es';
-function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+// clamp() is defined in sim.js (loaded before ui.js)
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
 // ── i18n ──────────────────────────────────────────────────────────
@@ -136,39 +136,14 @@ function updateGroverWalkUI(){
   const n=parseInt(document.getElementById('g-qubits').value);
   const tgt=document.getElementById('g-target').value||'1'.repeat(n);
   document.getElementById('g-circuit-walk').innerHTML=groverCircuitSVG(n,tgt,s.cs);
-  document.querySelectorAll('#g-steps-pills .wstep').forEach((b,i)=>{
-    b.className='wstep'+(i===gWalkStep?' active':i<gWalkStep?' done':'');
+  document.querySelectorAll('#g-pills .wpill').forEach((b,i)=>{
+    b.className='wpill'+(i===gWalkStep?' active':i<gWalkStep?' done':'');
   });
   document.getElementById('g-walk-prev').disabled=gWalkStep===0;
   document.getElementById('g-walk-next').disabled=gWalkStep===GROVER_STEPS.length-1;
 }
 
-async function runGrover(){
-  const n=parseInt(document.getElementById('g-qubits').value);
-  const target=document.getElementById('g-target').value;
-  const shots=parseInt(document.getElementById('g-shots').value);
-  const btn=document.getElementById('g-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
 
-  for(let i=0;i<GROVER_STEPS.length;i++){
-    gWalkStep=i;updateGroverWalkUI();
-    await sleep(500);
-  }
-  await sleep(200);
-  const r=simGroverFull(n,target,shots);
-  document.getElementById('g-results').style.display='block';
-  renderBars('g-bars',r.counts,target,'#f5c542','#1e2a60');
-  document.getElementById('g-badge').textContent=`|${target}⟩ — ${r.targetProb}%`;
-  document.getElementById('g-summary').innerHTML=
-    `<strong>|${target}⟩</strong> → <strong>${r.targetCount}/${shots}</strong> shots (${r.targetProb}%) · ${r.iters} iter${r.iters>1?'s':''} cuánticas vs ${r.N.toLocaleString()} clásico → <strong style="color:var(--green)">${r.speedup}× speedup</strong>`;
-
-  // Iter chart
-  document.getElementById('g-iter-wrap').style.display='block';
-  renderIterChart('g-iter-chart',r.snapshots,target,r.iters);
-
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('g-results').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
 
 function renderIterChart(cid,snapshots,target,finalIter){
   const el=document.getElementById(cid);if(!el)return;
@@ -232,8 +207,8 @@ function updateTeleWalkUI(){
   animBloch('t-bloch1',ps.t1,ps.p1,s.t1,s.p1,'#4488ff','');
   animBloch('t-bloch2',ps.t2,ps.p2,s.t2,s.p2,'#ff8844',s.lbl2||'');
   document.getElementById('t-circuit-walk').innerHTML=teleportCircuitSVG(s.cs);
-  document.querySelectorAll('#t-steps-pills .wstep').forEach((b,i)=>{
-    b.className='wstep'+(i===tWalkStep?' active':i<tWalkStep?' done':'');
+  document.querySelectorAll('#t-pills .wpill').forEach((b,i)=>{
+    b.className='wpill'+(i===tWalkStep?' active':i<tWalkStep?' done':'');
   });
   document.getElementById('t-walk-prev').disabled=tWalkStep===0;
   document.getElementById('t-walk-next').disabled=tWalkStep===TELE_STEPS.length-1;
@@ -242,23 +217,7 @@ function onTStateChange(){
   document.getElementById('t-custom-row').style.display=
     document.getElementById('t-state').value==='custom'?'block':'none';
 }
-async function runTeleport(){
-  const state=document.getElementById('t-state').value;
-  const theta=parseFloat(document.getElementById('t-theta')?.value||90);
-  const shots=parseInt(document.getElementById('t-shots').value);
-  const btn=document.getElementById('t-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
-  for(let i=0;i<TELE_STEPS.length;i++){tWalkStep=i;updateTeleWalkUI();await sleep(480);}
-  const r=simTeleport(state,theta,shots);
-  document.getElementById('t-results').style.display='block';
-  renderBars('t-raw-bars',r.rawCounts,null,'#6875c8','#1a2050');
-  renderBars('t-bob-bars',r.bobCorrected,r.p0>=r.p1?'0':'1','#36e8a0','#0d2a1a');
-  const b0=(r.bobCorrected['0']/shots*100).toFixed(1),b1=(r.bobCorrected['1']/shots*100).toFixed(1);
-  document.getElementById('t-summary').innerHTML=
-    `Mensaje <strong>${r.stateLabel}</strong> → Bob: <strong>${b0}%|0⟩, ${b1}%|1⟩</strong>. ✓ Original destruido, solo 2 bits clásicos viajaron.`;
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('t-results').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
+
 
 // ── STEANE ────────────────────────────────────────────────────────
 function initSteaneGrid(){
@@ -281,63 +240,7 @@ function updateSteaneLabel(){
   }
   document.getElementById('s-circuit').innerHTML=steaneCircuitSVG(eq);
 }
-async function runSteane(){
-  const eq=parseInt(document.getElementById('s-errq').value);
-  const shots=parseInt(document.getElementById('s-shots').value);
-  const btn=document.getElementById('s-run-btn');
-  btn.disabled=true;btn.classList.add('loading');btn.querySelector('.run-icon').textContent='⚛';
 
-  // Animate ancillas lighting up
-  for(let i=0;i<6;i++){
-    await sleep(140);
-    const a=document.getElementById('anc-'+i);
-    if(a) a.classList.add('active');
-  }
-  await sleep(400);
-
-  const r=simSteane(eq,shots);
-  const top=Object.entries(r.syndromeCounts).sort((a,b)=>b[1]-a[1])[0];
-  const bits=top[0].split('');
-
-  // Remove ancilla highlights, replace with syndrome
-  for(let i=0;i<6;i++){
-    const a=document.getElementById('anc-'+i);
-    if(a){a.classList.remove('active');if(bits[i]==='1')a.classList.add('active');}
-  }
-
-  // Corrected qubit flashes green
-  if(eq>=0){
-    await sleep(300);
-    const el=document.getElementById('sq-'+eq);
-    if(el){ el.className='sq corrected'; }
-  }
-
-  document.getElementById('s-results').style.display='block';
-
-  // Syndrome bits
-  document.getElementById('s-syn-bits').innerHTML=bits.map((b,i)=>
-    `<div class="syn-bit ${b==='1'?'on':'off'}">${b}</div>`).join('');
-  document.getElementById('s-syn-label').innerHTML=
-    `<strong style="color:${top[0]==='000000'?'var(--green)':'var(--amber)'}">${top[0]}</strong>
-     — ${syndromeDesc(top[0])} &nbsp;·&nbsp; ${top[1].toLocaleString()} shots`;
-
-  renderBars('s-logical-bars',r.logicalResult,'0','#36e8a0','#0d2a1a');
-
-  document.getElementById('s-summary').innerHTML=eq===-1
-    ?'✓ Sin error. Síndrome <code>000000</code>. Qubit lógico |0_L⟩ intacto.'
-    :`Error <strong>d[${eq}]</strong> detectado por síndrome <code>${r.syndrome}</code> → corrección X → qubit lógico <strong style="color:var(--green)">sobrevivió</strong>.`;
-
-  // Map
-  const sm={0:'001001',1:'010010',2:'011011',3:'001110',4:'010101',5:'011110',6:'001111'};
-  document.getElementById('s-syn-map').innerHTML=Object.entries(sm).map(([q,syn])=>
-    `<div style="background:var(--s2);border:1px solid ${parseInt(q)===eq?'var(--amber)':'var(--border)'};border-radius:8px;padding:6px 10px;display:flex;justify-content:space-between;align-items:center;font-size:11px">
-      <span style="color:var(--dim)">d[${q}]</span>
-      <code style="font-family:var(--mono);color:${parseInt(q)===eq?'var(--amber)':'var(--dim)'}">${syn}</code>
-    </div>`).join('');
-
-  btn.disabled=false;btn.classList.remove('loading');btn.querySelector('.run-icon').textContent='▶';
-  document.getElementById('s-results').scrollIntoView({behavior:'smooth',block:'nearest'});
-}
 
 // ── SPEEDUP ───────────────────────────────────────────────────────
 const SP_DATA=[
@@ -394,7 +297,7 @@ const QUIZ=[
   {q:'¿Cuántas iteraciones necesita Grover para buscar en 16 estados?',opts:['16','3','4','8'],ans:1,exp:'k = ⌊π/4·√16⌋ = ⌊3.14⌋ = 3 iteraciones.'},
   {q:'¿Cuántos bits clásicos envía Alice a Bob en la teleportación cuántica?',opts:['0','1','2','3'],ans:2,exp:'Alice mide q₀ y q₁ → 2 bits que viajan por canal convencional.'},
   {q:'¿Qué ocurre con el qubit original después de la teleportación?',opts:['Se copia','Se destruye','Se guarda','Se pausa'],ans:1,exp:'El teorema de no-clonación impide copiar qubits. El original queda destruido al medirlo.'},
-  {q:'¿Cuántos qubits físicos usa el código Steane [7,1,3]?',opts:['3','5','7','13'],ans:2,exp:'7 qubits de datos + 6 ancillas = 13 qubits totales en el circuito completo.'},
+  {q:'¿Cuántos qubits físicos de datos usa el código Steane [7,1,3]?',opts:['3','5','7','13'],ans:2,exp:'El código Steane [7,1,3] codifica 1 qubit lógico en 7 qubits físicos de datos. El circuito completo añade 6 ancillas de síndrome (total 13), pero el código en sí usa 7.'},
   {q:'La aceleración de Grover sobre búsqueda clásica es proporcional a...',opts:['N','log N','√N','N²'],ans:2,exp:'Grover usa O(√N) evaluaciones vs O(N) clásico → aceleración cuadrática.'},
   {q:'¿Qué puerta cuántica crea superposición?',opts:['X','CNOT','H','Z'],ans:2,exp:'La puerta Hadamard (H) lleva |0⟩ → (|0⟩+|1⟩)/√2.'},
   {q:'El síndrome "001110" en Steane identifica error en...',opts:['d[0]','d[2]','d[3]','d[5]'],ans:2,exp:'El mapa de síndromes asigna 001110 exactamente a d[3].'},
@@ -444,7 +347,7 @@ function showQuizScore(){
   const col=pct>=80?'var(--green)':pct>=50?'var(--amber)':'var(--red)';
   document.getElementById('quiz-score-wrap').innerHTML=`
     <div class="quiz-score-big" style="color:${col}">${qScore}/${QUIZ.length}</div>
-    <div class="quiz-score-msg">${pct>=90?'🏆 Maestro cuántico!':pct>=70?'🎉 Excelente!':pct>=50?'📚 Buen intento — revisa las explicaciones.':'🔬 Sigue explorando los laboratorios.'}</div>
+    <div class="quiz-score-msg">${pct>=90?'Maestro cuántico!':pct>=70?'Excelente!':pct>=50?'Buen intento — revisa las explicaciones.':'Sigue explorando los laboratorios.'}</div>
     <button class="run-btn" onclick="startQuiz()" style="margin-top:16px"><span class="run-icon">↺</span> Repetir</button>`;
   document.getElementById('quiz-progress').innerHTML=QUIZ.map(()=>`<div class="qpill done"></div>`).join('');
 }

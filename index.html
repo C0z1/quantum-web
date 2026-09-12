@@ -294,14 +294,14 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
 
 <!-- HERO -->
 <section id="hero">
-  <div class="hero-badge">⚛ Qiskit 2.5.2 · AerSimulator · Visualización Interactiva</div>
+  <div class="hero-badge" data-i="hero_badge">⚛ Qiskit 2.5.2 · AerSimulator · Visualización Interactiva</div>
   <h1 class="hero-title">Quantum<br><span>Computing Lab</span></h1>
-  <p class="hero-sub">Explora Grover, Teleportación y Steane con simulación en tiempo real, esferas de Bloch animadas y circuitos interactivos.</p>
+  <p class="hero-sub" data-i="hero_sub">Explora Grover, Teleportación y Steane con simulación en tiempo real, esferas de Bloch animadas y circuitos interactivos.</p>
   <div class="hero-lang">
     <button class="lang-pill active" id="btn-es" onclick="setLang('es')">🇲🇽 Español</button>
     <button class="lang-pill" id="btn-en" onclick="setLang('en')">🇺🇸 English</button>
   </div>
-  <button class="hero-enter" onclick="enterApp()">Comenzar experiencia →</button>
+  <button class="hero-enter" onclick="enterApp()" data-i="hero_enter">Comenzar experiencia →</button>
   <div class="scroll-hint" id="scroll-hint" style="display:none">
     <span>SCROLL</span><div class="scroll-arrow"></div>
   </div>
@@ -365,9 +365,9 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
       <div class="split fade-in">
         <div>
           <div class="glass">
-            <div class="glass-title">Configuración</div>
+            <div class="glass-title" data-i="g_controls">Configuración</div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Número de qubits</span>
+              <span class="ctrl-label" data-i="lbl_qubits">Número de qubits</span>
               <div class="ctrl-slider">
                 <input type="range" id="g-qubits" min="2" max="16" value="4" oninput="updateGroverMeta()">
                 <span class="ctrl-val" id="g-qubits-val">4</span>
@@ -375,19 +375,19 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
               <div class="ctrl-hint" id="g-space-hint">16 estados · 2⁴</div>
             </div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Estado objetivo (binario)</span>
+              <span class="ctrl-label" data-i="lbl_target">Estado objetivo (binario)</span>
               <input class="ctrl-input" id="g-target" maxlength="16" value="1111" oninput="validateTarget()">
               <div class="ctrl-hint" id="g-target-hint" style="color:var(--green)">✓ válido</div>
             </div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Shots</span>
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
               <select class="ctrl-select" id="g-shots">
                 <option value="512">512</option><option value="1024" selected>1024</option>
                 <option value="2048">2048</option><option value="4096">4096</option>
               </select>
             </div>
             <button class="run-btn" id="g-run-btn" onclick="runGrover()">
-              <span class="run-icon">▶</span> Ejecutar simulación
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
             </button>
           </div>
           <div id="g-results" style="display:none">
@@ -410,7 +410,7 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
         </div>
         <div class="viz-panel">
           <div class="glass">
-            <div class="glass-title">Paso a paso — Esferas de Bloch</div>
+            <div class="glass-title" data-i="g_walk_title">Paso a paso — Esferas de Bloch</div>
             <div class="walk-pills" id="g-pills">
               <button class="wpill active" onclick="gotoGroverStep(0)">|0⟩</button>
               <button class="wpill" onclick="gotoGroverStep(1)">H</button>
@@ -452,9 +452,9 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
       <div class="split fade-in">
         <div>
           <div class="glass">
-            <div class="glass-title">Configuración</div>
+            <div class="glass-title" data-i="t_controls">Configuración</div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Estado inicial del mensaje (q₀)</span>
+              <span class="ctrl-label" data-i="lbl_state">Estado inicial del mensaje (q₀)</span>
               <select class="ctrl-select" id="t-state" onchange="onTStateChange()">
                 <option value="plus">|+⟩ — superposición 50/50</option>
                 <option value="minus">|−⟩ — superposición fase opuesta</option>
@@ -472,23 +472,23 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
               </div>
             </div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Shots</span>
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
               <select class="ctrl-select" id="t-shots">
                 <option value="512">512</option><option value="1024" selected>1024</option>
                 <option value="2048">2048</option>
               </select>
             </div>
             <button class="run-btn" id="t-run-btn" onclick="runTeleport()">
-              <span class="run-icon">▶</span> Ejecutar simulación
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
             </button>
           </div>
           <div id="t-results" style="display:none">
             <div class="glass">
-              <div class="glass-title">Mediciones brutas (q₂ q₁ q₀)</div>
+              <div class="glass-title" data-i="raw_title">Mediciones brutas (q₂ q₁ q₀)</div>
               <div id="t-raw-bars"></div>
             </div>
             <div class="glass">
-              <div class="glass-title">Bob tras corrección X+Z</div>
+              <div class="glass-title" data-i="bob_title">Bob tras corrección X+Z</div>
               <div id="t-bob-bars"></div>
               <div class="info-box" id="t-summary" style="margin-top:10px"></div>
               <div class="export-row">
@@ -500,7 +500,7 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
         </div>
         <div class="viz-panel">
           <div class="glass">
-            <div class="glass-title">Protocolo — 3 Esferas de Bloch</div>
+            <div class="glass-title" data-i="t_walk_title">Protocolo — 3 Esferas de Bloch</div>
             <div class="walk-pills" id="t-pills">
               <button class="wpill active" onclick="gotoTeleStep(0)">Prep</button>
               <button class="wpill" onclick="gotoTeleStep(1)">Bell</button>
@@ -543,32 +543,32 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
       <div class="split fade-in">
         <div>
           <div class="glass">
-            <div class="glass-title">Configuración</div>
+            <div class="glass-title" data-i="s_controls">Configuración</div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Qubit con error (−1 = sin error)</span>
+              <span class="ctrl-label" data-i="lbl_errq">Qubit con error (−1 = sin error)</span>
               <div class="ctrl-slider">
                 <input type="range" id="s-errq" min="-1" max="6" value="3" oninput="updateSteaneLabel()">
                 <span class="ctrl-val" id="s-errq-val">d[3]</span>
               </div>
-              <div class="ctrl-hint" id="s-errq-hint" style="color:var(--red)">⚡ Error X en d[3]</div>
+              <div class="ctrl-hint" id="s-errq-hint" style="color:var(--red)">Error X en d[3]</div>
             </div>
             <div class="ctrl-row">
-              <span class="ctrl-label">Shots</span>
+              <span class="ctrl-label" data-i="lbl_shots">Shots</span>
               <select class="ctrl-select" id="s-shots">
                 <option value="512">512</option><option value="1024" selected>1024</option>
                 <option value="2048">2048</option>
               </select>
             </div>
             <button class="run-btn" id="s-run-btn" onclick="runSteane()">
-              <span class="run-icon">▶</span> Ejecutar simulación
+              <span class="run-icon">▶</span> <span data-i="btn_run">Ejecutar simulación</span>
             </button>
           </div>
           <div id="s-results" style="display:none">
             <div class="glass">
-              <div class="glass-title">Síndrome medido</div>
+              <div class="glass-title" data-i="syndrome_title">Síndrome medido</div>
               <div class="syn-bits" id="s-syn-bits"></div>
               <div id="s-syn-label" style="font-size:12px;color:var(--dim);margin-bottom:10px"></div>
-              <div class="glass-title" style="margin-top:12px">Qubit lógico tras corrección</div>
+              <div class="glass-title" data-i="logical_title" style="margin-top:12px">Qubit lógico tras corrección</div>
               <div id="s-logical-bars"></div>
               <div class="info-box" id="s-summary" style="margin-top:10px"></div>
               <div class="export-row">
@@ -577,16 +577,16 @@ body.light .ctrl-input,body.light .ctrl-select{background:rgba(255,255,255,.9);c
               </div>
             </div>
             <div class="glass">
-              <div class="glass-title">Mapa de síndromes [7,1,3]</div>
+              <div class="glass-title" data-i="syndrome_map">Mapa de síndromes [7,1,3]</div>
               <div id="s-syn-map" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(115px,1fr));gap:5px"></div>
             </div>
           </div>
         </div>
         <div class="viz-panel">
           <div class="glass">
-            <div class="glass-title">7 qubits físicos</div>
+            <div class="glass-title" data-i="s_grid_title">7 qubits físicos</div>
             <div class="steane-grid" id="s-qubit-grid"></div>
-            <div class="glass-title" style="margin-top:12px">6 ancillas de síndrome</div>
+            <div class="glass-title" data-i="s_ancilla_title" style="margin-top:12px">6 ancillas de síndrome</div>
             <div class="ancilla-row" id="s-ancilla-row"></div>
           </div>
           <div class="glass">
@@ -769,17 +769,17 @@ function addToCompareGrover(){
 function shareGroverResult(){
   if(!lastGroverResult){showToast('Ejecuta Grover primero','error');return;}
   const r=lastGroverResult;
-  shareResult(`⚛ Grover ${r.n}q · |${r.target}⟩ encontrado en ${r.targetProb}% (${r.shots} shots) · ${r.speedup}× speedup`);
+  shareResult(`Grover ${r.n}q · |${r.target}⟩ encontrado en ${r.targetProb}% (${r.shots} shots) · ${r.speedup}x speedup`);
 }
 function shareTeleportResult(){
   if(!lastTeleResult){showToast('Ejecuta Teleportación primero','error');return;}
   const r=lastTeleResult;
-  shareResult(`🔗 Teleportación · ${r.stateLabel} → Bob: ${(r.bobCorrected['0']/r.shots*100).toFixed(1)}%|0⟩ · ${r.shots} shots`);
+  shareResult(`Teleportación · ${r.stateLabel} → Bob: ${(r.bobCorrected['0']/r.shots*100).toFixed(1)}%|0⟩ · ${r.shots} shots`);
 }
 function shareSteaneResult(){
   if(!lastSteaneResult){showToast('Ejecuta Steane primero','error');return;}
   const r=lastSteaneResult;
-  shareResult(`🛡 Steane [7,1,3] · Error d[${r.errorQubit}] · Síndrome ${r.syndrome} · Corregido ✓`);
+  shareResult(`Steane [7,1,3] · Error d[${r.errorQubit}] · Síndrome ${r.syndrome} · Corregido`);
 }
 </script>
 </body>
